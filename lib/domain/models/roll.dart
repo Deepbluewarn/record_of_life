@@ -2,6 +2,7 @@ import 'package:record_of_life/domain/models/camera.dart';
 import 'package:record_of_life/domain/models/film.dart';
 
 class Roll {
+  final String id = DateTime.now().toString();
   final Camera? camera;
   final Film? film;
 

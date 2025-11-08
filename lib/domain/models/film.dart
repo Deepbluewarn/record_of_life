@@ -1,4 +1,5 @@
 class Film {
+  final String id = DateTime.now().toString();
   final String name;
   String? brand;
   int? iso;
