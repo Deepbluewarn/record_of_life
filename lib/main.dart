@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/features/roll/presentation/pages/home_page.dart';
 
 void main() {
-  runApp(MainApp());
+  runApp(ProviderScope(child: MainApp()));
 }
 
 class MainApp extends StatelessWidget {
@@ -9,42 +11,6 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      builder: (context, child) {
-        return Scaffold(
-          appBar: AppBar(
-            toolbarHeight: 70,
-            backgroundColor: const Color.fromARGB(100, 216, 216, 216),
-            title: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '롤 | ROL',
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  Text(
-                    'Record Of Life',
-                    style: TextStyle(
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [IconButton(onPressed: () {}, icon: Icon(Icons.settings))],
-          ),
-        );
-      },
-    );
+    return MaterialApp(home: HomePage());
   }
 }

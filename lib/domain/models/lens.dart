@@ -1,4 +1,5 @@
 class Lens {
+  final String id;
   final String name;
   String? brand; // Canon
   int? focalLength; // 50
@@ -9,6 +10,7 @@ class Lens {
   String? notes; // 코멘트
 
   Lens({
+    required this.id,
     required this.name,
     this.brand,
     this.focalLength,
