@@ -1,5 +1,5 @@
 class Camera {
-  final String id;
+  final String id = DateTime.now().toString();
   final String title;
   String? brand; // Canon
   String? format; // 35mm, 120, Half
@@ -7,7 +7,6 @@ class Camera {
   String? notes; // 상태/메모
 
   Camera({
-    required this.id,
     required this.title,
     this.brand,
     this.format,

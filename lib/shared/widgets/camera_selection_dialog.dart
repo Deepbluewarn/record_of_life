@@ -17,6 +17,7 @@ class CameraSelectionDialog extends ConsumerWidget {
       title: Text('카메라 선택'),
       content: SizedBox(
         width: double.maxFinite,
+        height: MediaQuery.of(context).size.height * 0.4,
         child: cameraState.when(
           data: (data) => ListView.builder(
             itemCount: data.cameras.length + 1,
@@ -35,7 +36,14 @@ class CameraSelectionDialog extends ConsumerWidget {
                   onTap: () {
                     showModalBottomSheet(
                       context: context,
-                      builder: (context) => AddCameraBottomSheet(),
+                      useSafeArea: true,
+                      isScrollControlled: true,
+                      builder: (context) => Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).viewInsets.bottom,
+                        ),
+                        child: AddCameraBottomSheet(),
+                      ),
                     );
                   },
                 );
@@ -56,6 +64,7 @@ class CameraSelectionDialog extends ConsumerWidget {
           error: (error, stackTrace) => Text('Error: $error'),
         ),
       ),
+      backgroundColor: Colors.white,
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text('취소')),
       ],

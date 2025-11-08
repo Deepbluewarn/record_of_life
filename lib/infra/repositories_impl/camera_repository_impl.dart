@@ -5,9 +5,9 @@ import 'package:record_of_life/domain/repositories/camera_repository.dart';
 
 class CameraRepositoryImpl extends CameraRepository {
   static final List<Camera> _cameras = [
-    Camera(id: '1', title: 'Canon AE-1', brand: 'Canon', format: '35mm'),
-    Camera(id: '2', title: 'Pentax K1000', brand: 'Pentax', format: '35mm'),
-    Camera(id: '3', title: 'Rolleiflex', brand: 'Rollei', format: '120'),
+    Camera(title: 'Canon AE-1', brand: 'Canon', format: '35mm'),
+    Camera(title: 'Pentax K1000', brand: 'Pentax', format: '35mm'),
+    Camera(title: 'Rolleiflex', brand: 'Rollei', format: '120'),
   ];
 
   @override
