@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/camera.dart';
 import 'package:record_of_life/features/roll/presentation/providers/camera_provider.dart';
+import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/add_camera_bottom_sheet.dart';
 
 class CameraSelectionDialog extends ConsumerWidget {
@@ -25,11 +26,11 @@ class CameraSelectionDialog extends ConsumerWidget {
               // 마지막 항목: 새 카메라 추가 버튼
               if (index == data.cameras.length) {
                 return ListTile(
-                  leading: Icon(Icons.add, color: Colors.blue),
+                  leading: Icon(Icons.add, color: AppColors.primary),
                   title: Text(
                     '새 카메라 추가',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -64,7 +65,7 @@ class CameraSelectionDialog extends ConsumerWidget {
           error: (error, stackTrace) => Text('Error: $error'),
         ),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surfaceLight,
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text('취소')),
       ],

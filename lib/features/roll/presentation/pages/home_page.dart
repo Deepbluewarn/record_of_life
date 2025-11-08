@@ -10,7 +10,6 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: CustomAppBar(title: '롤 | ROL', subtitle: 'Record Of Life'),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
