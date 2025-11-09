@@ -1,9 +1,47 @@
 // Roll Repository Implementation
+import 'package:record_of_life/domain/models/camera.dart';
+import 'package:record_of_life/domain/models/film.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/domain/repositories/roll_repository.dart';
 
 class RollRepositoryImpl extends RollRepository {
-  final List<Roll> _rolls = [];
+  final List<Roll> _rolls = [
+    Roll(
+      camera: Camera(title: 'Canon AE-1', brand: 'Canon', format: '35mm'),
+      film: Film(
+        name: 'Kodak Portra 400',
+        brand: 'Kodak',
+        iso: 400,
+        format: '35mm',
+      ),
+      title: '필름 이름 예제',
+      totalShots: 24,
+      shotsDone: 24,
+      startedAt: DateTime(2025, 10, 25),
+      endedAt: DateTime(2025, 10, 28),
+    ),
+    Roll(
+      camera: Camera(title: 'Pentax K1000', brand: 'Pentax', format: '35mm'),
+      film: Film(
+        name: 'Fujifilm Superia 200',
+        brand: 'Fujifilm',
+        iso: 200,
+        format: '35mm',
+      ),
+      title: '가을 산책',
+      totalShots: 36,
+      shotsDone: 18,
+      startedAt: DateTime(2025, 10, 20),
+    ),
+    Roll(
+      camera: Camera(title: 'Rolleiflex', brand: 'Rollei', format: '120'),
+      film: Film(name: 'Tri-X 400', brand: 'Kodak', iso: 400, format: '120'),
+      title: '흑백 실험',
+      totalShots: 12,
+      shotsDone: 5,
+      startedAt: DateTime(2025, 10, 10),
+    ),
+  ];
   @override
   Future<void> addRolls(List<Roll> newRolls) async {
     _rolls.addAll(newRolls);

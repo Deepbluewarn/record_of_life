@@ -24,4 +24,9 @@ class Roll {
     this.startedAt,
     this.endedAt,
   });
+
+  @override
+  String toString() {
+    return 'Roll(id: $id, camera: ${camera?.title}, film: ${film?.name}, title: $title, totalShots: $totalShots, shotsDone: $shotsDone, memo: $memo, startedAt: $startedAt, endedAt: $endedAt)';
+  }
 }

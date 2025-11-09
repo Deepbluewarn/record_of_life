@@ -4,6 +4,9 @@ import 'package:record_of_life/features/roll/presentation/providers/forms/new_ro
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
 import 'package:record_of_life/shared/widgets/camera_selection_dialog.dart';
+import 'package:record_of_life/shared/widgets/film_selection_dialog.dart';
+import 'package:record_of_life/shared/widgets/simple_text_field.dart';
+import 'package:record_of_life/shared/widgets/date_picker_field.dart';
 
 class AddRollPage extends ConsumerWidget {
   const AddRollPage({super.key});
@@ -40,6 +43,23 @@ class AddRollPage extends ConsumerWidget {
               ),
               SizedBox(height: 32),
 
+              // 필름 선택
+              _buildSelectionCard(
+                label: '필름',
+                value: rollFormState.film?.name,
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => FilmSelectionDialog(
+                      onSelected: (film) {
+                        ref.read(newRollFormProvider.notifier).setFilm(film);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 16),
               // 카메라 선택
               _buildSelectionCard(
                 label: '카메라',
@@ -58,53 +78,113 @@ class AddRollPage extends ConsumerWidget {
                   );
                 },
               ),
-              SizedBox(height: 16),
-
-              // 필름 선택
-              _buildSelectionCard(
-                label: '필름',
-                value: rollFormState.film?.name,
-                onTap: () {
-                  // FilmSelectionDialog
-                },
-              ),
-              SizedBox(height: 16),
-
-              // 렌즈 선택
-              // _buildSelectionCard(
-              //   label: '렌즈',
-              //   value: rollFormState.lens?.name,
-              //   onTap: () {
-              //     // LensSelectionDialog
-              //   },
-              // ),
               SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '제목',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SimpleTextField(
+                          onChanged: (value) {
+                            ref
+                                .read(newRollFormProvider.notifier)
+                                .setTitle(value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '컷 수',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SimpleTextField(
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) {
+                            final totalShots = int.tryParse(value);
+                            if (totalShots != null) {
+                              ref
+                                  .read(newRollFormProvider.notifier)
+                                  .setTotalShots(totalShots);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '시작일',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        DatePickerField(
+                          onDateChanged: (date) {
+                            ref
+                                .read(newRollFormProvider.notifier)
+                                .setStartedAt(date);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '메모',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SimpleTextField(
+                          onChanged: (value) {
+                            ref
+                                .read(newRollFormProvider.notifier)
+                                .setMemo(value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
 
               // 제목 입력
-              Text(
-                '롤 제목 (선택)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
               SizedBox(height: 8),
-              TextField(
-                onChanged: (value) {
-                  ref.read(newRollFormProvider.notifier).setTitle(value);
-                },
-                decoration: InputDecoration(
-                  hintText: '예: 여름 휴가',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                ),
-              ),
               SizedBox(height: 32),
 
               // 저장 버튼
@@ -119,7 +199,9 @@ class AddRollPage extends ConsumerWidget {
                           ref.read(newRollFormProvider.notifier).reset();
                           Navigator.pop(context);
                         }
-                      : null,
+                      : () {
+                          print(rollFormState.title);
+                        },
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: rollFormState.isComplete

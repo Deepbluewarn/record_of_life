@@ -15,11 +15,12 @@ class RollNotifier extends AsyncNotifier<RollState> {
 
   @override
   Future<RollState> build() async {
-    return RollState(rolls: [Roll()]);
+    var allRolls = await rollRepository.getAllRolls();
+    return RollState(rolls: allRolls);
   }
 
   void addRoll(Roll roll) async {
-    await rollRepository.addRolls([]);
+    await rollRepository.addRolls([roll]);
     final rolls = await rollRepository.getAllRolls();
 
     state = AsyncValue.data(RollState(rolls: rolls));

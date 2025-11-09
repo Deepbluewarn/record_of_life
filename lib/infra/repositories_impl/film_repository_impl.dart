@@ -26,6 +26,11 @@ class FilmRepositoryImpl extends FilmRepository {
   }
 
   @override
+  Future<List<Film>> getAllFilms() async {
+    return _films;
+  }
+
+  @override
   Future<void> updateFilm(Film film) async {
     final index = _films.indexWhere((f) => f.id == film.id);
     if (index >= 0) {

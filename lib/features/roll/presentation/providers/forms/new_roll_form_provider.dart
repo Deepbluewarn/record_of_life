@@ -81,11 +81,37 @@ class NewRollFormNotifier extends Notifier<NewRollFormState> {
     state = state.copyWith(camera: camera);
   }
 
+  void setFilm(Film film) {
+    state = state.copyWith(film: film);
+  }
+
   void setTitle(String title) {
     state = state.copyWith(title: title);
   }
 
-  void reset() {}
+  void setTotalShots(int totalShots) {
+    state = state.copyWith(totalShots: totalShots);
+  }
+
+  void setShotsDone(int shotsDone) {
+    state = state.copyWith(shotsDone: shotsDone);
+  }
+
+  void setMemo(String memo) {
+    state = state.copyWith(memo: memo);
+  }
+
+  void setStartedAt(DateTime startedAt) {
+    state = state.copyWith(startedAt: startedAt);
+  }
+
+  void setEndedAt(DateTime endedAt) {
+    state = state.copyWith(endedAt: endedAt);
+  }
+
+  void reset() {
+    state = NewRollFormState();
+  }
 
   void save() {}
 }
