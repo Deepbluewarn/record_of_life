@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
+import 'package:record_of_life/features/roll/presentation/pages/shot_list.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
 import 'package:record_of_life/shared/widgets/roll_card.dart';
@@ -28,7 +29,24 @@ class HomePage extends ConsumerWidget {
                   }
                   return ListView.separated(
                     itemBuilder: (BuildContext context, int index) {
-                      return RollCard(roll: rollData.rolls[index]);
+                      return Hero(
+                        tag: rollData.rolls[index].id,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ShotListPage(roll: rollData.rolls[index]),
+                                ),
+                              );
+                            },
+                            child: RollCard(roll: rollData.rolls[index]),
+                          ),
+                        ),
+                      );
                     },
                     separatorBuilder: (BuildContext context, int index) =>
                         const SizedBox(height: 8),

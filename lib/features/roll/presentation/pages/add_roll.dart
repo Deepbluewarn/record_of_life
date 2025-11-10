@@ -17,7 +17,6 @@ class AddRollPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: CustomAppBar(title: '롤 | ROL', subtitle: '새 롤 추가'),
-      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),

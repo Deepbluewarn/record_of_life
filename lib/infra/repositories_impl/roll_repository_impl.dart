@@ -62,7 +62,7 @@ class RollRepositoryImpl extends RollRepository {
 
   @override
   Future<List<Roll>> getAllRolls() async {
-    return _rolls;
+    return [..._rolls];
   }
 
   @override

@@ -27,7 +27,7 @@ class FilmRepositoryImpl extends FilmRepository {
 
   @override
   Future<List<Film>> getAllFilms() async {
-    return _films;
+    return [..._films];
   }
 
   @override

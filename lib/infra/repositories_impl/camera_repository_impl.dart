@@ -32,7 +32,7 @@ class CameraRepositoryImpl extends CameraRepository {
 
   @override
   Future<List<Camera>> getAllCameras() async {
-    return _cameras;
+    return [..._cameras];
   }
 
   @override

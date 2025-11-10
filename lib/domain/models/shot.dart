@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:record_of_life/domain/models/roll.dart';
 
 class Shot {
+  final String id = _generateId();
   final Roll roll;
   int idx = 1;
   DateTime? date;
@@ -21,4 +24,10 @@ class Shot {
     this.note,
     this.rating,
   });
+}
+
+String _generateId() {
+  final timestamp = DateTime.now().microsecondsSinceEpoch;
+  final random = Random().nextInt(999999);
+  return '$timestamp-$random';
 }
