@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_roll_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
-import 'package:record_of_life/shared/widgets/camera_selection_dialog.dart';
-import 'package:record_of_life/shared/widgets/film_selection_dialog.dart';
+import 'package:record_of_life/shared/widgets/dialogs/camera_selection_dialog.dart';
+import 'package:record_of_life/shared/widgets/dialogs/film_selection_dialog.dart';
 import 'package:record_of_life/shared/widgets/simple_text_field.dart';
 import 'package:record_of_life/shared/widgets/date_picker_field.dart';
 

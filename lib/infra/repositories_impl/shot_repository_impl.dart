@@ -27,7 +27,7 @@ class ShotRepositoryImpl extends ShotRepository {
     if (id == null) {
       return [];
     }
-    return (_shots.where((s) => s.roll.id == id)).toList();
+    return (_shots.where((s) => s.rollId == id)).toList();
   }
 
   @override

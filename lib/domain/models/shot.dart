@@ -1,10 +1,8 @@
 import 'dart:math';
 
-import 'package:record_of_life/domain/models/roll.dart';
-
 class Shot {
   final String id = _generateId();
-  final Roll roll;
+  final String rollId;
   int idx = 1;
   DateTime? date;
   double? aperture; // 2.8
@@ -15,7 +13,7 @@ class Shot {
   int? rating; // 1~5
 
   Shot({
-    required this.roll,
+    required this.rollId,
     this.date,
     this.aperture,
     this.shutterSpeed,

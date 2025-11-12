@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/roll.dart';
-import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
+import 'package:record_of_life/shared/widgets/bottom_sheets/add_shot_bottom_sheet.dart';
 import 'package:record_of_life/shared/widgets/roll_card.dart';
 import 'package:record_of_life/shared/widgets/shot_card.dart';
 
@@ -49,20 +49,17 @@ class ShotListPage extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () {
-                ref
-                    .read(shotProvider(roll.id).notifier)
-                    .addShot(
-                      Shot(
-                        roll: roll,
-                        date: DateTime.now(),
-                        aperture: 2.8,
-                        shutterSpeed: '1/125',
-                        focusDistance: '3m',
-                        exposureComp: 0.3,
-                        note: '테스트 샷',
-                        rating: 4,
-                      ),
-                    );
+                showModalBottomSheet(
+                  context: context,
+                  useSafeArea: true,
+                  isScrollControlled: true,
+                  builder: (context) => Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: AddShotBottomSheet(rollId: roll.id),
+                  ),
+                );
               },
               child: Text('새 샷 추가'),
             ),
