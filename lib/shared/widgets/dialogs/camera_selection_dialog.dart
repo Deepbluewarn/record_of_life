@@ -1,34 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:record_of_life/domain/models/film.dart';
-import 'package:record_of_life/features/roll/presentation/providers/film_provider.dart';
+import 'package:record_of_life/domain/models/camera.dart';
+import 'package:record_of_life/features/roll/presentation/providers/camera_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
-import 'package:record_of_life/shared/widgets/add_film_bottom_sheet.dart';
+import 'package:record_of_life/shared/widgets/bottom_sheets/add_camera_bottom_sheet.dart';
 
-class FilmSelectionDialog extends ConsumerWidget {
-  final Function(Film) onSelected;
+class CameraSelectionDialog extends ConsumerWidget {
+  final Function(Camera) onSelected;
 
-  const FilmSelectionDialog({super.key, required this.onSelected});
+  const CameraSelectionDialog({super.key, required this.onSelected});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final filmState = ref.watch(filmProvider);
+    final cameraState = ref.watch(cameraProvider);
 
     return AlertDialog(
-      title: Text('필름 선택'),
+      title: Text('카메라 선택'),
       content: SizedBox(
         width: double.maxFinite,
         height: MediaQuery.of(context).size.height * 0.4,
-        child: filmState.when(
+        child: cameraState.when(
           data: (data) => ListView.builder(
-            itemCount: data.films.length + 1,
+            itemCount: data.cameras.length + 1,
             itemBuilder: (context, index) {
-              // 마지막 항목: 새 필름 추가 버튼
-              if (index == data.films.length) {
+              // 마지막 항목: 새 카메라 추가 버튼
+              if (index == data.cameras.length) {
                 return ListTile(
                   leading: Icon(Icons.add, color: AppColors.primary),
                   title: Text(
-                    '새 필름 추가',
+                    '새 카메라 추가',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -43,20 +43,20 @@ class FilmSelectionDialog extends ConsumerWidget {
                         padding: EdgeInsets.only(
                           bottom: MediaQuery.of(context).viewInsets.bottom,
                         ),
-                        child: AddFilmBottomSheet(),
+                        child: AddCameraBottomSheet(),
                       ),
                     );
                   },
                 );
               }
-              final film = data.films[index];
+              final camera = data.cameras[index];
               return ListTile(
-                title: Text(film.name),
+                title: Text(camera.title),
                 subtitle: Text(
-                  '${film.brand ?? 'Unknown'} · ${film.format ?? ''}',
+                  '${camera.brand ?? 'Unknown'} · ${camera.format ?? ''}',
                 ),
                 onTap: () {
-                  onSelected(film);
+                  onSelected(camera);
                 },
               );
             },
