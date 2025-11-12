@@ -13,7 +13,7 @@ This project is in early development stage.
 
 ## Demo
 
-
+Try the app online: [Record of Life Demo](https://deepbluewarn.github.io/record_of_life/)
 
 ## Getting Started
 
