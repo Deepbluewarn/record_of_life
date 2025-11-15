@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/domain/enums/roll_status.dart';
 import 'package:record_of_life/domain/models/roll.dart';
+import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 
-class RollCard extends StatelessWidget {
+class RollCard extends ConsumerWidget {
   final Roll roll;
 
   const RollCard({super.key, required this.roll});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rollState = ref.watch(rollProvider);
+    final currentRoll = rollState.when(
+      data: (state) {
+        try {
+          return state.rolls.firstWhere((r) => r.id == roll.id);
+        } catch (e) {
+          return roll;
+        }
+      },
+      loading: () => roll,
+      error: (_, __) => roll,
+    );
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -92,7 +108,7 @@ class RollCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        '${roll.shotsDone ?? 0}/${roll.totalShots ?? 24}',
+                        '${currentRoll.shotsDone}/${currentRoll.totalShots}',
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -112,8 +128,8 @@ class RollCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: Colors.orange, width: 1),
                       ),
-                      child: const Text(
-                        '현상중',
+                      child: Text(
+                        roll.status.displayName(context),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

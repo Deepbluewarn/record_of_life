@@ -1,7 +1,7 @@
-import 'dart:math';
+import 'package:uuid/uuid.dart';
 
 class Shot {
-  final String id = _generateId();
+  final String id;
   final String rollId;
   int idx = 1;
   DateTime? date;
@@ -13,6 +13,7 @@ class Shot {
   int? rating; // 1~5
 
   Shot({
+    String? id,
     required this.rollId,
     this.date,
     this.aperture,
@@ -21,11 +22,27 @@ class Shot {
     this.exposureComp,
     this.note,
     this.rating,
-  });
-}
+  }) : id = id ?? const Uuid().v4();
 
-String _generateId() {
-  final timestamp = DateTime.now().microsecondsSinceEpoch;
-  final random = Random().nextInt(999999);
-  return '$timestamp-$random';
+  Shot copyWith({
+    DateTime? date,
+    double? aperture,
+    String? shutterSpeed,
+    String? focusDistance,
+    double? exposureComp,
+    String? note,
+    int? rating,
+  }) {
+    return Shot(
+      id: id,
+      rollId: rollId,
+      date: date ?? this.date,
+      aperture: aperture ?? this.aperture,
+      shutterSpeed: shutterSpeed ?? this.shutterSpeed,
+      focusDistance: focusDistance ?? this.focusDistance,
+      exposureComp: exposureComp ?? this.exposureComp,
+      note: note ?? this.note,
+      rating: rating ?? this.rating,
+    );
+  }
 }

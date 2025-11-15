@@ -25,7 +25,7 @@ class HomePage extends ConsumerWidget {
                   if (rollData.rolls.isEmpty) {
                     return Center(child: Text('저장된 롤이 없습니다'));
                   } else {
-                    print(rollData.rolls[0].toString());
+                    // print(rollData.rolls[0].toString());
                   }
                   return ListView.separated(
                     itemBuilder: (BuildContext context, int index) {

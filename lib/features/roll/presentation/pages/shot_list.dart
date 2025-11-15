@@ -17,7 +17,20 @@ class ShotListPage extends ConsumerWidget {
     final shotState = ref.watch(shotProvider(roll.id));
 
     return Scaffold(
-      appBar: CustomAppBar(title: '롤 | ROL', subtitle: '사진 목록'),
+      appBar: CustomAppBar(
+        title: '롤 | ROL',
+        subtitle: '롤 상세',
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () {},
+            // onPressed: () => Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => EditRollPage(roll: roll)),
+            // ),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

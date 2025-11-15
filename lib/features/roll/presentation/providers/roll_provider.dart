@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/roll.dart';
-import 'package:record_of_life/infra/repositories_impl/roll_repository_impl.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 
 class RollState {
   final List<Roll> rolls;
@@ -11,15 +11,15 @@ class RollState {
 }
 
 class RollNotifier extends AsyncNotifier<RollState> {
-  final rollRepository = RollRepositoryImpl();
-
   @override
   Future<RollState> build() async {
+    final rollRepository = ref.watch(rollRepositoryProvider);
     var allRolls = await rollRepository.getAllRolls();
     return RollState(rolls: allRolls);
   }
 
   void addRoll(Roll roll) async {
+    final rollRepository = ref.read(rollRepositoryProvider);
     await rollRepository.addRolls([roll]);
     final rolls = await rollRepository.getAllRolls();
 
@@ -27,6 +27,6 @@ class RollNotifier extends AsyncNotifier<RollState> {
   }
 }
 
-final rollProvider = AsyncNotifierProvider.autoDispose<RollNotifier, RollState>(
+final rollProvider = AsyncNotifierProvider<RollNotifier, RollState>(
   RollNotifier.new,
 );

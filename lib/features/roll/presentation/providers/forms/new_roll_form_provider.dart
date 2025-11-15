@@ -8,7 +8,7 @@ class NewRollFormState {
   final Camera? camera;
   final Film? film;
   final String? title;
-  final int? totalShots;
+  final int totalShots;
   final int? shotsDone;
   final String? memo;
   DateTime? startedAt = DateTime.now();
@@ -18,7 +18,7 @@ class NewRollFormState {
     this.camera,
     this.film,
     this.title,
-    this.totalShots,
+    this.totalShots = 36,
     this.shotsDone,
     this.memo,
     this.startedAt,
@@ -49,10 +49,7 @@ class NewRollFormState {
 
   // 폼 완성도 체크 (저장 가능 여부)
   bool get isComplete {
-    return camera != null &&
-        film != null &&
-        title != null &&
-        totalShots != null;
+    return camera != null && film != null && title != null;
   }
 
   // Roll 객체로 변환 (저장할 때)

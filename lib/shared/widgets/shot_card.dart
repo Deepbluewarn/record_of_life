@@ -55,8 +55,7 @@ class ShotCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      // '컷 ${index + 1}',
-                      shot.id,
+                      '컷 ${index + 1}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
