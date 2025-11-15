@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:record_of_life/features/roll/presentation/providers/forms/new_roll_form_provider.dart';
 
-class DatePickerField extends ConsumerWidget {
+class DatePickerField extends StatelessWidget {
   final ValueChanged<DateTime> onDateChanged;
+  final DateTime initialDate;
 
-  const DatePickerField({super.key, required this.onDateChanged});
+  DatePickerField({
+    super.key,
+    required this.onDateChanged,
+    DateTime? initialDate,
+  }) : initialDate = initialDate ?? DateTime.now();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final rollFormState = ref.watch(newRollFormProvider);
-    final selectedDate = rollFormState.startedAt;
-
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(
           context: context,
-          initialDate: selectedDate ?? DateTime.now(),
+          initialDate: initialDate,
           firstDate: DateTime(2000),
           lastDate: DateTime.now(),
         );
@@ -34,12 +34,8 @@ class DatePickerField extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              selectedDate != null
-                  ? '${selectedDate.year}.${selectedDate.month}.${selectedDate.day}'
-                  : '날짜 선택',
-              style: TextStyle(
-                color: selectedDate != null ? Colors.black : Colors.grey[400],
-              ),
+              '${initialDate.year}.${initialDate.month}.${initialDate.day}',
+              style: TextStyle(color: Colors.black),
             ),
             Icon(Icons.calendar_today, size: 18, color: Colors.grey[400]),
           ],

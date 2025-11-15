@@ -1,20 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/roll.dart';
+import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
+import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
 import 'package:record_of_life/shared/widgets/bottom_sheets/add_shot_bottom_sheet.dart';
 import 'package:record_of_life/shared/widgets/roll_card.dart';
 import 'package:record_of_life/shared/widgets/shot_card.dart';
 
-class ShotListPage extends ConsumerWidget {
+class RollDetailsPage extends ConsumerWidget {
   final Roll roll;
 
-  const ShotListPage({super.key, required this.roll});
+  const RollDetailsPage({super.key, required this.roll});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shotState = ref.watch(shotProvider(roll.id));
+    final rollState = ref.watch(rollProvider);
+
+    final currentRoll = rollState.when(
+      data: (state) {
+        try {
+          return state.rolls.firstWhere((r) => r.id == roll.id);
+        } catch (e) {
+          return roll;
+        }
+      },
+      loading: () => roll,
+      error: (_, __) => roll,
+    );
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -23,11 +38,12 @@ class ShotListPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.edit),
-            onPressed: () {},
-            // onPressed: () => Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (context) => EditRollPage(roll: roll)),
-            // ),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddRollPage(roll: currentRoll),
+              ),
+            ),
           ),
         ],
       ),

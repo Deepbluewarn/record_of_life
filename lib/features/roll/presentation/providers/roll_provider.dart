@@ -25,6 +25,25 @@ class RollNotifier extends AsyncNotifier<RollState> {
 
     state = AsyncValue.data(RollState(rolls: rolls));
   }
+
+  void updateRoll(Roll roll) async {
+    final rollRepository = ref.read(rollRepositoryProvider);
+
+    await rollRepository.updateRoll(
+      roll.id,
+      title: roll.title,
+      memo: roll.memo,
+      shotsDone: roll.shotsDone,
+      totalShots: roll.totalShots,
+      status: roll.status,
+      startedAt: roll.startedAt,
+      endedAt: roll.endedAt,
+    );
+
+    final rolls = await rollRepository.getAllRolls();
+
+    state = AsyncValue.data(RollState(rolls: rolls));
+  }
 }
 
 final rollProvider = AsyncNotifierProvider<RollNotifier, RollState>(

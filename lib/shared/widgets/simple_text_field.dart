@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
-class SimpleTextField extends StatelessWidget {
+class SimpleTextFormField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final String? hintText;
   final TextInputType keyboardType;
+  final String? initialValue;
 
-  const SimpleTextField({
+  const SimpleTextFormField({
     super.key,
+    this.initialValue,
     this.onChanged,
     this.hintText,
     this.keyboardType = TextInputType.text,
@@ -14,7 +16,8 @@ class SimpleTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
+      initialValue: initialValue,
       keyboardType: keyboardType,
       onChanged: onChanged,
       decoration: InputDecoration(

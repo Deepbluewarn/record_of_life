@@ -60,14 +60,16 @@ class RollCard extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      roll.title ?? '제목 없음',
+                      currentRoll.title ?? '제목 없음',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
+                    Text(currentRoll.id, style: TextStyle(fontSize: 8)),
                     Text(
-                      _formatDate(roll.startedAt),
+                      _formatDate(currentRoll.startedAt),
                       style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                   ],
@@ -81,14 +83,14 @@ class RollCard extends ConsumerWidget {
               children: [
                 // 카메라
                 Text(
-                  roll.camera?.title ?? '카메라 선택 안함',
+                  currentRoll.camera?.title ?? '카메라 선택 안함',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 4),
                 // 필름
                 Text(
-                  roll.film?.name ?? '필름 선택 안함',
+                  currentRoll.film?.name ?? '필름 선택 안함',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   textAlign: TextAlign.right,
                 ),
@@ -129,7 +131,7 @@ class RollCard extends ConsumerWidget {
                         border: Border.all(color: Colors.orange, width: 1),
                       ),
                       child: Text(
-                        roll.status.displayName(context),
+                        currentRoll.status.displayName(context),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

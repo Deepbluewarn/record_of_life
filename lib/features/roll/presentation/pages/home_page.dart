@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
-import 'package:record_of_life/features/roll/presentation/pages/shot_list.dart';
+import 'package:record_of_life/features/roll/presentation/pages/roll_details.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
 import 'package:record_of_life/shared/widgets/roll_card.dart';
@@ -38,8 +38,9 @@ class HomePage extends ConsumerWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      ShotListPage(roll: rollData.rolls[index]),
+                                  builder: (context) => RollDetailsPage(
+                                    roll: rollData.rolls[index],
+                                  ),
                                 ),
                               );
                             },

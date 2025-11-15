@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/domain/enums/roll_status.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/domain/models/camera.dart';
 import 'package:record_of_life/domain/models/film.dart';
-import 'package:record_of_life/infra/repositories_impl/roll_repository_impl.dart';
 
 class NewRollFormState {
   final Camera? camera;
@@ -13,6 +13,7 @@ class NewRollFormState {
   final String? memo;
   DateTime? startedAt = DateTime.now();
   final DateTime? endedAt;
+  final RollStatus? status;
 
   NewRollFormState({
     this.camera,
@@ -23,6 +24,7 @@ class NewRollFormState {
     this.memo,
     this.startedAt,
     this.endedAt,
+    this.status,
   });
 
   NewRollFormState copyWith({
@@ -34,6 +36,7 @@ class NewRollFormState {
     String? memo,
     DateTime? startedAt,
     DateTime? endedAt,
+    RollStatus? status,
   }) {
     return NewRollFormState(
       camera: camera ?? this.camera,
@@ -44,6 +47,7 @@ class NewRollFormState {
       memo: memo ?? this.memo,
       startedAt: startedAt ?? this.startedAt,
       endedAt: endedAt ?? this.endedAt,
+      status: status ?? this.status,
     );
   }
 
@@ -53,8 +57,9 @@ class NewRollFormState {
   }
 
   // Roll 객체로 변환 (저장할 때)
-  Roll toRoll() {
+  Roll toRoll({String? rollId}) {
     return Roll(
+      id: rollId,
       camera: camera,
       film: film,
       title: title,
@@ -62,15 +67,34 @@ class NewRollFormState {
       shotsDone: shotsDone ?? 0,
       memo: memo,
       endedAt: endedAt,
+      status: status,
     );
   }
 }
 
 class NewRollFormNotifier extends Notifier<NewRollFormState> {
-  final repository = RollRepositoryImpl();
+  Roll? roll;
+
+  NewRollFormNotifier(this.roll);
 
   @override
   NewRollFormState build() {
+    // ✅ roll이 있으면 해당 데이터로 초기화
+    if (roll != null) {
+      return NewRollFormState(
+        camera: roll!.camera,
+        film: roll!.film,
+        title: roll!.title,
+        totalShots: roll!.totalShots,
+        shotsDone: roll!.shotsDone,
+        memo: roll!.memo,
+        startedAt: roll!.startedAt,
+        endedAt: roll!.endedAt,
+        status: roll!.status,
+      );
+    }
+
+    // ✅ roll이 없으면 빈 상태로 초기화
     return NewRollFormState();
   }
 
@@ -106,6 +130,10 @@ class NewRollFormNotifier extends Notifier<NewRollFormState> {
     state = state.copyWith(endedAt: endedAt);
   }
 
+  void setStatus(RollStatus status) {
+    state = state.copyWith(status: status);
+  }
+
   void reset() {
     state = NewRollFormState();
   }
@@ -113,7 +141,7 @@ class NewRollFormNotifier extends Notifier<NewRollFormState> {
   void save() {}
 }
 
-final newRollFormProvider =
-    NotifierProvider.autoDispose<NewRollFormNotifier, NewRollFormState>(
+final newRollFormProvider = NotifierProvider.family
+    .autoDispose<NewRollFormNotifier, NewRollFormState, Roll?>(
       NewRollFormNotifier.new,
     );

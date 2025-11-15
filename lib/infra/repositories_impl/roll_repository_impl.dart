@@ -80,6 +80,7 @@ class RollRepositoryImpl extends RollRepository {
     int? shotsDone,
     int? totalShots,
     RollStatus? status,
+    DateTime? startedAt,
     DateTime? endedAt,
   }) async {
     final index = _rolls.indexWhere((r) => r.id == rollId);
@@ -90,6 +91,7 @@ class RollRepositoryImpl extends RollRepository {
         shotsDone: shotsDone,
         totalShots: totalShots,
         status: status,
+        startedAt: startedAt,
         endedAt: endedAt,
       );
     }
