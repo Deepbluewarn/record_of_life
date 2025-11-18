@@ -4,7 +4,7 @@ import 'package:record_of_life/domain/models/film.dart';
 import 'package:record_of_life/domain/repositories/film_repository.dart';
 
 class FilmRepositoryImpl extends FilmRepository {
-  final List<Film> _films = [];
+  static final List<Film> _films = [];
   @override
   Future<void> addFilm(Film film) async {
     if (_films.any((f) => f.id == film.id)) {
