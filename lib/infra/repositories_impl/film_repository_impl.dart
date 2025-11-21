@@ -4,7 +4,12 @@ import 'package:record_of_life/domain/models/film.dart';
 import 'package:record_of_life/domain/repositories/film_repository.dart';
 
 class FilmRepositoryImpl extends FilmRepository {
-  static final List<Film> _films = [];
+  static final List<Film> _films = [
+    Film(name: 'Kodak Portra 400', brand: 'Kodak', iso: 400),
+    Film(name: 'Fujifilm Pro 400H', brand: 'Fujifilm', iso: 400),
+    Film(name: 'Ilford HP5 Plus', brand: 'Ilford', iso: 400),
+    Film(name: 'Tri-X 400', brand: 'Kodak', iso: 400),
+  ];
   @override
   Future<void> addFilm(Film film) async {
     if (_films.any((f) => f.id == film.id)) {
