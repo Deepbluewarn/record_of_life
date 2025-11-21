@@ -18,6 +18,13 @@ class ShotRepositoryImpl extends ShotRepository {
   }
 
   @override
+  Future<bool> deleteShotsByRollId(String rollId) async {
+    _shots.removeWhere((s) => s.rollId == rollId);
+
+    return true;
+  }
+
+  @override
   Future<List<Shot>> getShots(List<String> ids) async {
     return (_shots.where((s) => ids.contains(s.id))).toList();
   }

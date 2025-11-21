@@ -7,4 +7,5 @@ abstract class ShotRepository {
   Future<void> addShot(Shot shot);
   Future<void> updateShot(Shot shot);
   Future<bool> deleteShot(String id);
+  Future<bool> deleteShotsByRollId(String rollId);
 }

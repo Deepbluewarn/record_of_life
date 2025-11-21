@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/roll.dart';
+import 'package:record_of_life/domain/usecases/delete_roll.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 
 class RollState {
   final List<Roll> rolls;
@@ -18,7 +20,7 @@ class RollNotifier extends AsyncNotifier<RollState> {
     return RollState(rolls: allRolls);
   }
 
-  void addRoll(Roll roll) async {
+  Future<void> addRoll(Roll roll) async {
     final rollRepository = ref.read(rollRepositoryProvider);
     await rollRepository.addRolls([roll]);
     final rolls = await rollRepository.getAllRolls();
@@ -26,7 +28,7 @@ class RollNotifier extends AsyncNotifier<RollState> {
     state = AsyncValue.data(RollState(rolls: rolls));
   }
 
-  void updateRoll(Roll roll) async {
+  Future<void> updateRoll(Roll roll) async {
     final rollRepository = ref.read(rollRepositoryProvider);
 
     await rollRepository.updateRoll(
@@ -43,6 +45,23 @@ class RollNotifier extends AsyncNotifier<RollState> {
     final rolls = await rollRepository.getAllRolls();
 
     state = AsyncValue.data(RollState(rolls: rolls));
+  }
+
+  Future<void> deleteRoll(String rollId) async {
+    final rollRepository = ref.read(rollRepositoryProvider);
+    final shotRepository = ref.read(shotRepositoryProvider);
+
+    await DeleteRoll(
+      rollRepository: rollRepository,
+      shotRepository: shotRepository,
+      targetRollId: rollId,
+    ).delete();
+
+    final rolls = await rollRepository.getAllRolls();
+
+    state = AsyncValue.data(RollState(rolls: rolls));
+
+    ref.invalidate(shotProvider(rollId));
   }
 }
 

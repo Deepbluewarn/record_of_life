@@ -45,6 +45,44 @@ class RollDetailsPage extends ConsumerWidget {
               ),
             ),
           ),
+          IconButton(
+            icon: Icon(Icons.delete),
+            color: const Color.fromARGB(255, 228, 110, 101),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('롤 삭제'),
+                  content: const Text(
+                    '이 롤과 관련된 모든 샷이 영구적으로 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('취소'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context); // 다이얼로그 닫기
+                        await ref
+                            .read(rollProvider.notifier)
+                            .deleteRoll(currentRoll.id);
+                        if (context.mounted) {
+                          Navigator.pop(context); // RollDetailsPage 닫기
+                        }
+                      },
+                      child: const Text(
+                        '삭제',
+                        style: TextStyle(
+                          color: Color.fromARGB(255, 228, 110, 101),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
       body: Padding(
