@@ -39,8 +39,9 @@ class NewShotFormState {
     );
   }
 
-  Shot toShot({required String rollId}) {
+  Shot toShot({String? shotId, required String rollId}) {
     return Shot(
+      id: shotId,
       rollId: rollId,
       date: date,
       aperture: aperture,
@@ -60,8 +61,24 @@ class NewShotFormState {
 }
 
 class NewShotFormNotifier extends Notifier<NewShotFormState> {
+  final Shot? _shot;
+
+  NewShotFormNotifier(this._shot);
+
   @override
-  NewShotFormState build() => NewShotFormState();
+  NewShotFormState build() {
+    if (_shot != null) {
+      return NewShotFormState(
+        date: _shot.date,
+        aperture: _shot.aperture,
+        shutterSpeed: _shot.shutterSpeed,
+        exposureComp: _shot.exposureComp,
+        note: _shot.note,
+        rating: _shot.rating,
+      );
+    }
+    return NewShotFormState();
+  }
 
   void setDate(DateTime? date) {
     state = state.copyWith(date: date);
@@ -92,7 +109,7 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
   }
 }
 
-final newShotFormProvider =
-    NotifierProvider.autoDispose<NewShotFormNotifier, NewShotFormState>(
+final newShotFormProvider = NotifierProvider.family
+    .autoDispose<NewShotFormNotifier, NewShotFormState, Shot?>(
       NewShotFormNotifier.new,
     );

@@ -39,19 +39,24 @@ class HorizontalSelector<T> extends StatelessWidget {
                   HapticFeedback.selectionClick();
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.black : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(24),
-                    border: isSelected
-                        ? Border.all(color: Colors.black, width: 2)
-                        : null,
+                    color: isSelected
+                        ? Colors.black.withAlpha(15)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? Colors.black : Colors.grey[300]!,
+                      width: isSelected ? 2 : 1,
+                    ),
                   ),
                   child: Text(
                     labelBuilder(item),
                     style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black,
-                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.black : Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
                   ),
                 ),

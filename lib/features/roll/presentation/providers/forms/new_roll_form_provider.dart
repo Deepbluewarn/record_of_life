@@ -73,24 +73,24 @@ class NewRollFormState {
 }
 
 class NewRollFormNotifier extends Notifier<NewRollFormState> {
-  Roll? roll;
+  final Roll? _roll;
 
-  NewRollFormNotifier(this.roll);
+  NewRollFormNotifier(this._roll);
 
   @override
   NewRollFormState build() {
     // ✅ roll이 있으면 해당 데이터로 초기화
-    if (roll != null) {
+    if (_roll != null) {
       return NewRollFormState(
-        camera: roll!.camera,
-        film: roll!.film,
-        title: roll!.title,
-        totalShots: roll!.totalShots,
-        shotsDone: roll!.shotsDone,
-        memo: roll!.memo,
-        startedAt: roll!.startedAt,
-        endedAt: roll!.endedAt,
-        status: roll!.status,
+        camera: _roll.camera,
+        film: _roll.film,
+        title: _roll.title,
+        totalShots: _roll.totalShots,
+        shotsDone: _roll.shotsDone,
+        memo: _roll.memo,
+        startedAt: _roll.startedAt,
+        endedAt: _roll.endedAt,
+        status: _roll.status,
       );
     }
 

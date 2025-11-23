@@ -47,6 +47,12 @@ class ShotNotifier extends AsyncNotifier<ShotState> {
   Future<void> updateShot(Shot shot) async {
     final shotsRepository = ref.read(shotRepositoryProvider);
     await shotsRepository.updateShot(shot);
+
+    state.whenData((currentState) {
+      final shots = currentState.shots.where((s) => s.id != shot.id);
+      final updatedShots = [...shots, shot];
+      state = AsyncValue.data(ShotState(shots: updatedShots));
+    });
   }
 }
 

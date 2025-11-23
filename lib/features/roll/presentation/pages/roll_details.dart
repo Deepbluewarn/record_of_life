@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
+import 'package:record_of_life/features/roll/presentation/pages/picture_detail.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
@@ -104,7 +105,29 @@ class RollDetailsPage extends ConsumerWidget {
                   return ListView.separated(
                     itemCount: shotData.shots.length,
                     itemBuilder: (context, idx) {
-                      return ShotCard(shot: shotData.shots[idx], index: idx);
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PictureDetailPage(
+                                shot: shotData.shots[idx],
+                                rollId: roll.id,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Hero(
+                          tag: shotData.shots[idx].id,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: ShotCard(
+                              shot: shotData.shots[idx],
+                              index: idx,
+                            ),
+                          ),
+                        ),
+                      );
                     },
                     separatorBuilder: (context, idx) =>
                         const SizedBox(height: 8),
