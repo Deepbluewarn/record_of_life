@@ -76,14 +76,14 @@ class ShotCard extends StatelessWidget {
               children: [
                 // 조리개
                 Text(
-                  'f/${shot.aperture ?? '-'}',
+                  shot.aperture.toString(),
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 4),
                 // 셔터 스피드
                 Text(
-                  shot.shutterSpeed ?? '-',
+                  shot.shutterSpeed.toString(),
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   textAlign: TextAlign.right,
                 ),

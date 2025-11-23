@@ -1,20 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/domain/enums/aperture.dart';
+import 'package:record_of_life/domain/enums/exposure_comp.dart';
+import 'package:record_of_life/domain/enums/shutter_speed.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 
 class NewShotFormState {
   final DateTime? date;
-  final double? aperture; // 2.8
-  final String? shutterSpeed; // 1/125
-  final String? focusDistance; // 3m
-  final double? exposureComp; // +0.3
-  final String? note; // 컷 메모
-  final int? rating; // 1~5
+  final Aperture? aperture;
+  final ShutterSpeed? shutterSpeed;
+  final ExposureComp? exposureComp;
+  final String? note;
+  final int? rating;
 
   NewShotFormState({
     DateTime? date,
     this.aperture,
     this.shutterSpeed,
-    this.focusDistance,
     this.exposureComp,
     this.note,
     this.rating,
@@ -22,10 +23,9 @@ class NewShotFormState {
 
   NewShotFormState copyWith({
     DateTime? date,
-    double? aperture,
-    String? shutterSpeed,
-    String? focusDistance,
-    double? exposureComp,
+    Aperture? aperture,
+    ShutterSpeed? shutterSpeed,
+    ExposureComp? exposureComp,
     String? note,
     int? rating,
   }) {
@@ -33,7 +33,6 @@ class NewShotFormState {
       date: date ?? this.date,
       aperture: aperture ?? this.aperture,
       shutterSpeed: shutterSpeed ?? this.shutterSpeed,
-      focusDistance: focusDistance ?? this.focusDistance,
       exposureComp: exposureComp ?? this.exposureComp,
       note: note ?? this.note,
       rating: rating ?? this.rating,
@@ -46,18 +45,15 @@ class NewShotFormState {
       date: date,
       aperture: aperture,
       shutterSpeed: shutterSpeed,
-      focusDistance: focusDistance,
       exposureComp: exposureComp,
       note: note,
       rating: rating,
     );
   }
 
-  // 필드별 유효성 검사 (필요에 따라 확장)
-  bool get apertureValid => aperture == null || aperture! > 0;
+  bool get apertureValid => aperture != null;
   bool get ratingValid => rating == null || (rating! >= 1 && rating! <= 5);
 
-  // 폼 전체 유효성
   bool get isValid {
     return apertureValid && ratingValid;
   }
@@ -71,19 +67,15 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
     state = state.copyWith(date: date);
   }
 
-  void setAperture(double? aperture) {
+  void setAperture(Aperture? aperture) {
     state = state.copyWith(aperture: aperture);
   }
 
-  void setShutterSpeed(String? shutterSpeed) {
+  void setShutterSpeed(ShutterSpeed? shutterSpeed) {
     state = state.copyWith(shutterSpeed: shutterSpeed);
   }
 
-  void setFocusDistance(String? focusDistance) {
-    state = state.copyWith(focusDistance: focusDistance);
-  }
-
-  void setExposureComp(double? exposureComp) {
+  void setExposureComp(ExposureComp? exposureComp) {
     state = state.copyWith(exposureComp: exposureComp);
   }
 

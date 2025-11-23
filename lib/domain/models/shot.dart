@@ -1,3 +1,6 @@
+import 'package:record_of_life/domain/enums/aperture.dart';
+import 'package:record_of_life/domain/enums/exposure_comp.dart';
+import 'package:record_of_life/domain/enums/shutter_speed.dart';
 import 'package:uuid/uuid.dart';
 
 class Shot {
@@ -5,12 +8,11 @@ class Shot {
   final String rollId;
   int idx = 1;
   DateTime? date;
-  double? aperture; // 2.8
-  String? shutterSpeed; // 1/125
-  String? focusDistance; // 3m
-  double? exposureComp; // +0.3
-  String? note; // 컷 메모
-  int? rating; // 1~5
+  Aperture? aperture;
+  ShutterSpeed? shutterSpeed;
+  ExposureComp? exposureComp;
+  String? note;
+  int? rating;
 
   Shot({
     String? id,
@@ -18,7 +20,6 @@ class Shot {
     this.date,
     this.aperture,
     this.shutterSpeed,
-    this.focusDistance,
     this.exposureComp,
     this.note,
     this.rating,
@@ -26,10 +27,9 @@ class Shot {
 
   Shot copyWith({
     DateTime? date,
-    double? aperture,
-    String? shutterSpeed,
-    String? focusDistance,
-    double? exposureComp,
+    Aperture? aperture,
+    ShutterSpeed? shutterSpeed,
+    ExposureComp? exposureComp,
     String? note,
     int? rating,
   }) {
@@ -39,7 +39,6 @@ class Shot {
       date: date ?? this.date,
       aperture: aperture ?? this.aperture,
       shutterSpeed: shutterSpeed ?? this.shutterSpeed,
-      focusDistance: focusDistance ?? this.focusDistance,
       exposureComp: exposureComp ?? this.exposureComp,
       note: note ?? this.note,
       rating: rating ?? this.rating,

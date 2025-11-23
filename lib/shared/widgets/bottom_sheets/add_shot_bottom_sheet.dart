@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/domain/enums/aperture.dart';
+import 'package:record_of_life/domain/enums/exposure_comp.dart';
+import 'package:record_of_life/domain/enums/shutter_speed.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
+import 'package:record_of_life/shared/widgets/horizontal_selector.dart';
 
 class AddShotBottomSheet extends ConsumerWidget {
   final String rollId;
@@ -39,10 +44,26 @@ class AddShotBottomSheet extends ConsumerWidget {
                 ),
                 SizedBox(height: 20),
 
-                Text(
-                  '새 사진 추가',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '새 사진 추가',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    IconButton(
+                      padding: EdgeInsets.all(14),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: Icon(Icons.close),
+                    ),
+                  ],
                 ),
+
                 SizedBox(height: 20),
 
                 // 날짜 선택
@@ -75,87 +96,79 @@ class AddShotBottomSheet extends ConsumerWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
-
-                // 조리개 값
-                TextField(
-                  onChanged: (value) {
-                    final aperture = double.tryParse(value);
+                // 조리개
+                HorizontalSelector<Aperture>(
+                  title: '조리개 (f/)',
+                  items: Aperture.values,
+                  selectedItem: shotFormProvider.aperture,
+                  labelBuilder: (aperture) => 'f/${aperture.value}',
+                  onSelected: (aperture) {
                     ref
                         .read(newShotFormProvider.notifier)
                         .setAperture(aperture);
                   },
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText: '조리개 (f/)',
-                    hintText: '예: 2.8',
-                    border: OutlineInputBorder(),
-                  ),
                 ),
                 SizedBox(height: 16),
 
                 // 셔터 스피드
-                TextField(
-                  onChanged: (value) {
+                HorizontalSelector<ShutterSpeed>(
+                  title: '셔터 스피드',
+                  items: ShutterSpeed.values,
+                  selectedItem: shotFormProvider.shutterSpeed,
+                  labelBuilder: (shutterSpeed) => shutterSpeed.label,
+                  onSelected: (shutterSpeed) {
                     ref
                         .read(newShotFormProvider.notifier)
-                        .setShutterSpeed(value);
+                        .setShutterSpeed(shutterSpeed);
                   },
-                  decoration: InputDecoration(
-                    labelText: '셔터 스피드',
-                    hintText: '예: 1/125',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 16),
-
-                // 초점 거리
-                TextField(
-                  onChanged: (value) {
-                    ref
-                        .read(newShotFormProvider.notifier)
-                        .setFocusDistance(value);
-                  },
-                  decoration: InputDecoration(
-                    labelText: '초점 거리',
-                    hintText: '예: 3m',
-                    border: OutlineInputBorder(),
-                  ),
                 ),
                 SizedBox(height: 16),
 
                 // 노출 보정
-                TextField(
-                  onChanged: (value) {
-                    final exposureComp = double.tryParse(value);
+                HorizontalSelector<ExposureComp>(
+                  title: '노출 보정 (E/V)',
+                  items: ExposureComp.values,
+                  selectedItem: shotFormProvider.exposureComp,
+                  labelBuilder: (exposureComp) => exposureComp.label,
+                  onSelected: (exposureComp) {
                     ref
                         .read(newShotFormProvider.notifier)
                         .setExposureComp(exposureComp);
                   },
-                  keyboardType: TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: '노출 보정',
-                    hintText: '예: +0.3',
-                    border: OutlineInputBorder(),
-                  ),
                 ),
                 SizedBox(height: 16),
 
                 // 평점
-                TextField(
-                  onChanged: (value) {
-                    final rating = int.tryParse(value);
-                    ref.read(newShotFormProvider.notifier).setRating(rating);
-                  },
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: '평점 (1-5)',
-                    hintText: '1~5',
-                    border: OutlineInputBorder(),
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('평점', style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
+                    Row(
+                      children: List.generate(5, (index) {
+                        final starRating = index + 1;
+                        final isSelected =
+                            shotFormProvider.rating != null &&
+                            starRating <= shotFormProvider.rating!;
+                        return GestureDetector(
+                          onTap: () {
+                            ref
+                                .read(newShotFormProvider.notifier)
+                                .setRating(starRating);
+                            HapticFeedback.selectionClick();
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.only(right: 8),
+                            child: Icon(
+                              isSelected ? Icons.star : Icons.star_border,
+                              color: Colors.amber,
+                              size: 40,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 16),
 
