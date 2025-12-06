@@ -1,46 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
-import 'package:record_of_life/features/roll/presentation/pages/all_rolls_page.dart';
 import 'package:record_of_life/features/roll/presentation/pages/roll_details.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
 import 'package:record_of_life/shared/widgets/roll_card.dart';
-import 'package:record_of_life/shared/widgets/section_header.dart';
 
-class HomePage extends ConsumerWidget {
-  const HomePage({super.key});
+class AllRollsPage extends ConsumerWidget {
+  const AllRollsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rollState = ref.watch(rollProvider(RollFilter.active));
+    final rollState = ref.watch(rollProvider(RollFilter.all));
 
     return Scaffold(
-      appBar: CustomAppBar(title: '롤 | ROL', subtitle: 'Record Of Life'),
+      appBar: CustomAppBar(title: '롤 | ROL', subtitle: '전체 롤'),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            SectionHeader(
-              title: '진행 중인 롤',
-              count: rollState.maybeWhen(
-                data: (data) => data.rolls.length,
-                orElse: () => 0,
-              ),
-              onActionPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AllRollsPage()),
-                );
-              },
-            ),
             Expanded(
               child: rollState.when(
                 data: (rollData) {
                   if (rollData.rolls.isEmpty) {
                     return Center(child: Text('저장된 롤이 없습니다'));
-                  } else {
-                    // print(rollData.rolls[0].toString());
                   }
                   return ListView.separated(
                     itemBuilder: (BuildContext context, int index) {
@@ -77,7 +60,6 @@ class HomePage extends ConsumerWidget {
                 },
               ),
             ),
-
             TextButton(
               onPressed: () {
                 Navigator.push(

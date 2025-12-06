@@ -12,7 +12,7 @@ class RollCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rollState = ref.watch(rollProvider);
+    final rollState = ref.watch(rollProvider(null));
     final currentRoll = rollState.when(
       data: (state) {
         try {

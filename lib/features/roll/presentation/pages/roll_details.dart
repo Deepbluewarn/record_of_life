@@ -18,16 +18,10 @@ class RollDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shotState = ref.watch(shotProvider(roll.id));
-    final rollState = ref.watch(rollProvider);
+    final rollState = ref.watch(rollProvider(RollFilter(rollId: roll.id)));
 
     final currentRoll = rollState.when(
-      data: (state) {
-        try {
-          return state.rolls.firstWhere((r) => r.id == roll.id);
-        } catch (e) {
-          return roll;
-        }
-      },
+      data: (state) => state.rolls.isNotEmpty ? state.rolls.first : roll,
       loading: () => roll,
       error: (_, __) => roll,
     );
@@ -66,7 +60,7 @@ class RollDetailsPage extends ConsumerWidget {
                       onPressed: () async {
                         Navigator.pop(context); // 다이얼로그 닫기
                         await ref
-                            .read(rollProvider.notifier)
+                            .read(rollProvider(null).notifier)
                             .deleteRoll(currentRoll.id);
                         if (context.mounted) {
                           Navigator.pop(context); // RollDetailsPage 닫기

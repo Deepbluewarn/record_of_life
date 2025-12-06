@@ -252,12 +252,12 @@ class AddRollPage extends ConsumerWidget {
                       ? () {
                           isEditMode
                               ? ref
-                                    .read(rollProvider.notifier)
+                                    .read(rollProvider(null).notifier)
                                     .updateRoll(
                                       rollFormState.toRoll(rollId: roll!.id),
                                     )
                               : ref
-                                    .read(rollProvider.notifier)
+                                    .read(rollProvider(null).notifier)
                                     .addRoll(rollFormState.toRoll());
 
                           ref.read(newRollFormProvider(roll).notifier).reset();
