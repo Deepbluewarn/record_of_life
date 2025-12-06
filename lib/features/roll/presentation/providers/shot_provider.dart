@@ -42,6 +42,8 @@ class ShotNotifier extends AsyncNotifier<ShotState> {
   Future<void> deleteShot(String shotId) async {
     final shotsRepository = ref.read(shotRepositoryProvider);
     await shotsRepository.deleteShot(shotId);
+
+    ref.invalidateSelf();
   }
 
   Future<void> updateShot(Shot shot) async {

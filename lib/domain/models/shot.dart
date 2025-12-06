@@ -13,6 +13,7 @@ class Shot {
   ExposureComp? exposureComp;
   String? note;
   int? rating;
+  String? imagePath;
 
   Shot({
     String? id,
@@ -23,6 +24,7 @@ class Shot {
     this.exposureComp,
     this.note,
     this.rating,
+    this.imagePath,
   }) : id = id ?? const Uuid().v4();
 
   Shot copyWith({
@@ -32,6 +34,7 @@ class Shot {
     ExposureComp? exposureComp,
     String? note,
     int? rating,
+    String? imagePath,
   }) {
     return Shot(
       id: id,
@@ -42,6 +45,7 @@ class Shot {
       exposureComp: exposureComp ?? this.exposureComp,
       note: note ?? this.note,
       rating: rating ?? this.rating,
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 }

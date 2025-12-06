@@ -11,6 +11,7 @@ class NewShotFormState {
   final ExposureComp? exposureComp;
   final String? note;
   final int? rating;
+  final String? imagePath;
 
   NewShotFormState({
     DateTime? date,
@@ -19,6 +20,7 @@ class NewShotFormState {
     this.exposureComp,
     this.note,
     this.rating,
+    this.imagePath,
   }) : date = date ?? DateTime.now();
 
   NewShotFormState copyWith({
@@ -28,6 +30,7 @@ class NewShotFormState {
     ExposureComp? exposureComp,
     String? note,
     int? rating,
+    String? imagePath,
   }) {
     return NewShotFormState(
       date: date ?? this.date,
@@ -36,6 +39,7 @@ class NewShotFormState {
       exposureComp: exposureComp ?? this.exposureComp,
       note: note ?? this.note,
       rating: rating ?? this.rating,
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 
@@ -49,6 +53,7 @@ class NewShotFormState {
       exposureComp: exposureComp,
       note: note,
       rating: rating,
+      imagePath: imagePath,
     );
   }
 
@@ -75,6 +80,7 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
         exposureComp: _shot.exposureComp,
         note: _shot.note,
         rating: _shot.rating,
+        imagePath: _shot.imagePath,
       );
     }
     return NewShotFormState();
@@ -102,6 +108,10 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
 
   void setRating(int? rating) {
     state = state.copyWith(rating: rating);
+  }
+
+  void setImagePath(String? imagePath) {
+    state = state.copyWith(imagePath: imagePath);
   }
 
   void reset() {

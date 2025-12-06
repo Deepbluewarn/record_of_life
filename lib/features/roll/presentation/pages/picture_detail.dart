@@ -29,7 +29,31 @@ class PictureDetailPage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () {
-              // 삭제 기능 (구현 X)
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('사진 삭제'),
+                  content: Text('이 사진을 삭제하시겠습니까?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('취소'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context); // 다이얼로그 닫기
+                        await ref
+                            .read(shotProvider(rollId).notifier)
+                            .deleteShot(shot.id);
+                        if (context.mounted) {
+                          Navigator.pop(context); // 상세 페이지 닫기
+                        }
+                      },
+                      child: Text('삭제', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
             },
           ),
           IconButton(

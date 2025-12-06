@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:record_of_life/domain/enums/aperture.dart';
 import 'package:record_of_life/domain/enums/exposure_comp.dart';
 import 'package:record_of_life/domain/enums/shutter_speed.dart';
@@ -146,6 +150,110 @@ class ShotForm extends ConsumerWidget {
               );
             }),
           ),
+        ),
+        SizedBox(height: 24),
+
+        // 사진
+        Text('사진', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        Row(
+          children: [
+            // 썸네일 표시
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: shotFormProvider.imagePath != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(shotFormProvider.imagePath!),
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Icon(Icons.image, size: 30, color: Colors.grey[400]),
+            ),
+            SizedBox(width: 12),
+            // 사진 추가 버튼
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final picker = ImagePicker();
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('사진 선택'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            leading: Icon(Icons.photo_library),
+                            title: Text('갤러리에서 선택'),
+                            onTap: () async {
+                              Navigator.pop(context);
+                              final XFile? image = await picker.pickImage(
+                                source: ImageSource.gallery,
+                              );
+                              if (image != null) {
+                                // 앱 전용 디렉터리에 저장
+                                final appDir =
+                                    await getApplicationDocumentsDirectory();
+                                final fileName =
+                                    '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+                                final savedPath =
+                                    '${appDir.path}/images/$fileName';
+                                final savedFile = File(savedPath);
+                                await savedFile.parent.create(recursive: true);
+                                await image.saveTo(savedPath);
+                                ref
+                                    .read(newShotFormProvider(shot).notifier)
+                                    .setImagePath(savedPath);
+                              }
+                            },
+                          ),
+                          ListTile(
+                            leading: Icon(Icons.camera_alt),
+                            title: Text('카메라로 촬영'),
+                            onTap: () async {
+                              Navigator.pop(context);
+                              final XFile? image = await picker.pickImage(
+                                source: ImageSource.camera,
+                              );
+                              if (image != null) {
+                                // 앱 전용 디렉터리에 저장
+                                final appDir =
+                                    await getApplicationDocumentsDirectory();
+                                final fileName =
+                                    '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+                                final savedPath =
+                                    '${appDir.path}/images/$fileName';
+                                final savedFile = File(savedPath);
+                                await savedFile.parent.create(recursive: true);
+                                await image.saveTo(savedPath);
+                                ref
+                                    .read(newShotFormProvider(shot).notifier)
+                                    .setImagePath(savedPath);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.add_photo_alternate),
+                label: Text('사진 추가'),
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: Colors.grey[300]!),
+                ),
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 24),
 
