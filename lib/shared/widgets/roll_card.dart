@@ -12,15 +12,9 @@ class RollCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rollState = ref.watch(rollProvider(null));
+    final rollState = ref.watch(rollProvider(RollFilter(rollId: roll.id)));
     final currentRoll = rollState.when(
-      data: (state) {
-        try {
-          return state.rolls.firstWhere((r) => r.id == roll.id);
-        } catch (e) {
-          return roll;
-        }
-      },
+      data: (state) => state.rolls.isNotEmpty ? state.rolls.first : roll,
       loading: () => roll,
       error: (_, __) => roll,
     );
