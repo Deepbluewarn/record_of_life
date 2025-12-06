@@ -32,25 +32,25 @@ class RollCard extends ConsumerWidget {
         border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
           children: [
             // 좌측: 썸네일
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 썸네일 (더미)
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 16),
+            // Column(
+            //   crossAxisAlignment: CrossAxisAlignment.start,
+            //   children: [
+            //     // 썸네일 (더미)
+            //     Container(
+            //       width: 80,
+            //       height: 80,
+            //       decoration: BoxDecoration(
+            //         color: Colors.grey[300],
+            //         borderRadius: BorderRadius.circular(8),
+            //       ),
+            //     ),
+            //   ],
+            // ),
+            // const SizedBox(width: 16),
             // 중간: 제목 + 날짜
             Expanded(
               child: SizedBox(

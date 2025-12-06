@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
@@ -24,24 +25,30 @@ class ShotCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 썸네일 (더미)
+                // 썸네일
                 Container(
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[400]!, width: 0.5),
                   ),
-                  child: Center(
-                    child: Text(
-                      '${index + 1}',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
+                  child: shot.imagePath != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(shot.imagePath!),
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey[400],
+                            size: 32,
+                          ),
+                        ),
                 ),
               ],
             ),
