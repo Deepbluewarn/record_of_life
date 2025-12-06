@@ -10,7 +10,10 @@ import 'package:record_of_life/domain/enums/exposure_comp.dart';
 import 'package:record_of_life/domain/enums/shutter_speed.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
+import 'package:record_of_life/shared/widgets/dialogs/lens_selection_dialog.dart';
 import 'package:record_of_life/shared/widgets/horizontal_selector.dart';
+import 'package:record_of_life/shared/widgets/selection_card.dart';
 
 class ShotForm extends ConsumerWidget {
   final Shot? shot;
@@ -19,6 +22,7 @@ class ShotForm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shotFormProvider = ref.watch(newShotFormProvider(shot));
+    final lensState = ref.watch(lensProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,6 +76,41 @@ class ShotForm extends ConsumerWidget {
             ),
           ),
         ),
+        SizedBox(height: 24),
+        // 렌즈 선택
+        SelectionCard(
+          label: '렌즈',
+          value: lensState.when(
+            data: (data) {
+              print('shotFormProvider.lensId: ${shotFormProvider.lensId}');
+              print(data.lenses);
+              if (shotFormProvider.lensId == null || data.lenses.isEmpty) {
+                return null;
+              }
+              final lens = data.lenses.firstWhere(
+                (l) => l.id == shotFormProvider.lensId,
+                orElse: () => data.lenses.first,
+              );
+              return lens.name;
+            },
+            loading: () => null,
+            error: (_, __) => null,
+          ),
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (context) => LensSelectionDialog(
+                onSelected: (lens) {
+                  ref
+                      .read(newShotFormProvider(shot).notifier)
+                      .setLensId(lens.id);
+                  Navigator.pop(context);
+                },
+              ),
+            );
+          },
+        ),
+        SizedBox(height: 24),
         SizedBox(height: 24),
 
         // 조리개

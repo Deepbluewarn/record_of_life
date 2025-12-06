@@ -8,6 +8,7 @@ class Shot {
   final String rollId;
   int idx = 1;
   DateTime? date;
+  String? lensId; // 렌즈 ID 추가
   Aperture? aperture;
   ShutterSpeed? shutterSpeed;
   ExposureComp? exposureComp;
@@ -19,6 +20,7 @@ class Shot {
     String? id,
     required this.rollId,
     this.date,
+    this.lensId,
     this.aperture,
     this.shutterSpeed,
     this.exposureComp,
@@ -29,6 +31,7 @@ class Shot {
 
   Shot copyWith({
     DateTime? date,
+    String? lensId,
     Aperture? aperture,
     ShutterSpeed? shutterSpeed,
     ExposureComp? exposureComp,
@@ -40,6 +43,7 @@ class Shot {
       id: id,
       rollId: rollId,
       date: date ?? this.date,
+      lensId: lensId ?? this.lensId,
       aperture: aperture ?? this.aperture,
       shutterSpeed: shutterSpeed ?? this.shutterSpeed,
       exposureComp: exposureComp ?? this.exposureComp,

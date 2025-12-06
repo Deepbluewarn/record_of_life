@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:record_of_life/features/roll/presentation/providers/film_provider.dart';
-import 'package:record_of_life/features/roll/presentation/providers/forms/new_film_form_provider.dart';
-import 'package:record_of_life/shared/constants/film_constants.dart';
+import 'package:record_of_life/features/roll/presentation/providers/forms/new_lens_form_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
+import 'package:record_of_life/shared/constants/lens_constants.dart';
 
-class AddFilmBottomSheet extends ConsumerStatefulWidget {
-  const AddFilmBottomSheet({super.key});
+class AddLensBottomSheet extends ConsumerStatefulWidget {
+  const AddLensBottomSheet({super.key});
 
   @override
-  ConsumerState<AddFilmBottomSheet> createState() => _AddFilmBottomSheetState();
+  ConsumerState<AddLensBottomSheet> createState() => _AddLensBottomSheetState();
 }
 
-class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
-  String? _selectedBrand;
-  String? _selectedIso;
-  String? _selectedFormat;
-  bool _isCustomBrand = false;
-  bool _isCustomIso = false;
-  bool _isCustomFormat = false;
+class _AddLensBottomSheetState extends ConsumerState<AddLensBottomSheet> {
+  String? _selectedFocalLength;
+  String? _selectedAperture;
+  String? _selectedMount;
+  bool _isCustomFocalLength = false;
+  bool _isCustomAperture = false;
+  bool _isCustomMount = false;
 
   @override
   Widget build(BuildContext context) {
-    final filmFormProvider = ref.watch(newFilmFormProvider);
+    final lensFormProvider = ref.watch(newLensFormProvider);
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -54,7 +54,7 @@ class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '새 필름 추가',
+                      '새 렌즈 추가',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
@@ -71,14 +71,14 @@ class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
                 ),
                 SizedBox(height: 20),
 
-                // 필름명
+                // 렌즈명
                 TextField(
                   onChanged: (value) {
-                    ref.read(newFilmFormProvider.notifier).setName(value);
+                    ref.read(newLensFormProvider.notifier).setName(value);
                   },
                   decoration: InputDecoration(
-                    labelText: '필름명 *',
-                    hintText: '예: Portra 400',
+                    labelText: '렌즈명 *',
+                    hintText: '예: Canon FD 50mm f/1.4',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -88,85 +88,46 @@ class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
                 ),
                 SizedBox(height: 16),
 
-                // 제조사 선택
+                // 초점거리 선택
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedBrand,
+                  initialValue: _selectedFocalLength,
                   decoration: InputDecoration(
-                    labelText: '제조사 *',
+                    labelText: '초점거리 (mm)',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
                     fillColor: Colors.grey[50],
                   ),
-                  items: FilmConstants.commonBrands.map((brand) {
-                    return DropdownMenuItem(value: brand, child: Text(brand));
+                  items: LensConstants.commonFocalLengths.map((focal) {
+                    return DropdownMenuItem(value: focal, child: Text(focal));
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
-                      _selectedBrand = value;
-                      _isCustomBrand = value == '기타 (직접 입력)';
-                      if (!_isCustomBrand && value != null) {
-                        ref.read(newFilmFormProvider.notifier).setBrand(value);
+                      _selectedFocalLength = value;
+                      _isCustomFocalLength = value == '기타 (직접 입력)';
+                      if (!_isCustomFocalLength && value != null) {
+                        final focalValue = int.tryParse(value);
+                        ref
+                            .read(newLensFormProvider.notifier)
+                            .setFocalLength(focalValue);
                       }
                     });
                   },
                 ),
-                if (_isCustomBrand) ...[
+                if (_isCustomFocalLength) ...[
                   SizedBox(height: 12),
                   TextField(
                     onChanged: (value) {
-                      ref.read(newFilmFormProvider.notifier).setBrand(value);
-                    },
-                    decoration: InputDecoration(
-                      labelText: '제조사 직접 입력',
-                      hintText: '예: Rollei',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                    ),
-                  ),
-                ],
-                SizedBox(height: 16),
-
-                // ISO 선택
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedIso,
-                  decoration: InputDecoration(
-                    labelText: 'ISO *',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  items: FilmConstants.commonIsos.map((iso) {
-                    return DropdownMenuItem(value: iso, child: Text(iso));
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedIso = value;
-                      _isCustomIso = value == '기타 (직접 입력)';
-                      if (!_isCustomIso && value != null) {
-                        final isoValue = int.tryParse(value);
-                        ref.read(newFilmFormProvider.notifier).setIso(isoValue);
-                      }
-                    });
-                  },
-                ),
-                if (_isCustomIso) ...[
-                  SizedBox(height: 12),
-                  TextField(
-                    onChanged: (value) {
-                      final isoValue = int.tryParse(value);
-                      ref.read(newFilmFormProvider.notifier).setIso(isoValue);
+                      final focalValue = int.tryParse(value);
+                      ref
+                          .read(newLensFormProvider.notifier)
+                          .setFocalLength(focalValue);
                     },
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'ISO 직접 입력',
-                      hintText: '예: 125',
+                      labelText: '초점거리 직접 입력',
+                      hintText: '예: 135',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -177,39 +138,89 @@ class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
                 ],
                 SizedBox(height: 16),
 
-                // 포맷 선택
+                // 최대 조리개 선택
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedFormat,
+                  initialValue: _selectedAperture,
                   decoration: InputDecoration(
-                    labelText: '포맷 *',
+                    labelText: '최대 조리개',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
                     fillColor: Colors.grey[50],
                   ),
-                  items: FilmConstants.commonFormats.map((format) {
-                    return DropdownMenuItem(value: format, child: Text(format));
+                  items: LensConstants.commonMaxApertures.map((aperture) {
+                    return DropdownMenuItem(
+                      value: aperture,
+                      child: Text(aperture),
+                    );
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
-                      _selectedFormat = value;
-                      _isCustomFormat = value == '기타 (직접 입력)';
-                      if (!_isCustomFormat && value != null) {
-                        ref.read(newFilmFormProvider.notifier).setFormat(value);
+                      _selectedAperture = value;
+                      _isCustomAperture = value == '기타 (직접 입력)';
+                      if (!_isCustomAperture && value != null) {
+                        ref
+                            .read(newLensFormProvider.notifier)
+                            .setMaxAperture(value);
                       }
                     });
                   },
                 ),
-                if (_isCustomFormat) ...[
+                if (_isCustomAperture) ...[
                   SizedBox(height: 12),
                   TextField(
                     onChanged: (value) {
-                      ref.read(newFilmFormProvider.notifier).setFormat(value);
+                      ref
+                          .read(newLensFormProvider.notifier)
+                          .setMaxAperture(value);
                     },
                     decoration: InputDecoration(
-                      labelText: '포맷 직접 입력',
-                      hintText: '예: APS',
+                      labelText: '조리개 직접 입력',
+                      hintText: '예: f/2.8',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                  ),
+                ],
+                SizedBox(height: 16),
+
+                // 마운트 선택
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedMount,
+                  decoration: InputDecoration(
+                    labelText: '마운트',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                  items: LensConstants.commonMounts.map((mount) {
+                    return DropdownMenuItem(value: mount, child: Text(mount));
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedMount = value;
+                      _isCustomMount = value == '기타 (직접 입력)';
+                      if (!_isCustomMount && value != null) {
+                        ref.read(newLensFormProvider.notifier).setMount(value);
+                      }
+                    });
+                  },
+                ),
+                if (_isCustomMount) ...[
+                  SizedBox(height: 12),
+                  TextField(
+                    onChanged: (value) {
+                      ref.read(newLensFormProvider.notifier).setMount(value);
+                    },
+                    decoration: InputDecoration(
+                      labelText: '마운트 직접 입력',
+                      hintText: '예: Sony E',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -223,11 +234,11 @@ class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
                 // 메모
                 TextField(
                   onChanged: (value) {
-                    ref.read(newFilmFormProvider.notifier).setNote(value);
+                    ref.read(newLensFormProvider.notifier).setNotes(value);
                   },
                   decoration: InputDecoration(
                     labelText: '메모 (선택사항)',
-                    hintText: '필름에 대한 추가 정보를 입력하세요',
+                    hintText: '렌즈에 대한 추가 정보를 입력하세요',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -243,12 +254,12 @@ class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: filmFormProvider.when(
+                  child: lensFormProvider.when(
                     data: (formState) => ElevatedButton(
                       onPressed: () {
                         ref
-                            .read(filmProvider.notifier)
-                            .addFilm(formState.toFilm());
+                            .read(lensProvider.notifier)
+                            .addLens(formState.toLens());
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
@@ -260,7 +271,7 @@ class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
                         elevation: 0,
                       ),
                       child: Text(
-                        '필름 추가하기',
+                        '렌즈 추가하기',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

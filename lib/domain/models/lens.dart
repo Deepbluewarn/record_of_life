@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+
 class Lens {
   final String id;
   final String name;
@@ -10,7 +12,7 @@ class Lens {
   String? notes; // 코멘트
 
   Lens({
-    required this.id,
+    String? id,
     required this.name,
     this.brand,
     this.focalLength,
@@ -19,5 +21,5 @@ class Lens {
     this.coating,
     this.notes,
     this.type,
-  });
+  }) : id = id ?? const Uuid().v4();
 }

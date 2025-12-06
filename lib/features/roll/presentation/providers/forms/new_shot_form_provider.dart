@@ -6,6 +6,7 @@ import 'package:record_of_life/domain/models/shot.dart';
 
 class NewShotFormState {
   final DateTime? date;
+  final String? lensId;
   final Aperture? aperture;
   final ShutterSpeed? shutterSpeed;
   final ExposureComp? exposureComp;
@@ -15,6 +16,7 @@ class NewShotFormState {
 
   NewShotFormState({
     DateTime? date,
+    this.lensId,
     this.aperture,
     this.shutterSpeed,
     this.exposureComp,
@@ -25,6 +27,7 @@ class NewShotFormState {
 
   NewShotFormState copyWith({
     DateTime? date,
+    String? lensId,
     Aperture? aperture,
     ShutterSpeed? shutterSpeed,
     ExposureComp? exposureComp,
@@ -34,6 +37,7 @@ class NewShotFormState {
   }) {
     return NewShotFormState(
       date: date ?? this.date,
+      lensId: lensId ?? this.lensId,
       aperture: aperture ?? this.aperture,
       shutterSpeed: shutterSpeed ?? this.shutterSpeed,
       exposureComp: exposureComp ?? this.exposureComp,
@@ -48,6 +52,7 @@ class NewShotFormState {
       id: shotId,
       rollId: rollId,
       date: date,
+      lensId: lensId,
       aperture: aperture,
       shutterSpeed: shutterSpeed,
       exposureComp: exposureComp,
@@ -75,6 +80,7 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
     if (_shot != null) {
       return NewShotFormState(
         date: _shot.date,
+        lensId: _shot.lensId,
         aperture: _shot.aperture,
         shutterSpeed: _shot.shutterSpeed,
         exposureComp: _shot.exposureComp,
@@ -88,6 +94,10 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
 
   void setDate(DateTime? date) {
     state = state.copyWith(date: date);
+  }
+
+  void setLensId(String? lensId) {
+    state = state.copyWith(lensId: lensId);
   }
 
   void setAperture(Aperture? aperture) {

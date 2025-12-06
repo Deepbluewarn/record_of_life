@@ -5,6 +5,10 @@ import 'package:record_of_life/domain/repositories/lens_repository.dart';
 class LensRepositoryImpl extends LensRepository {
   static final List<Lens> _lens = [];
 
+  Future<List<Lens>> getAllLenses() async {
+    return List.from(_lens);
+  }
+
   @override
   Future<void> addLens(Lens lens) async {
     if (_lens.any((l) => l.id == lens.id)) {

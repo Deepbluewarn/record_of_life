@@ -44,7 +44,6 @@ class RollNotifier extends AsyncNotifier<RollState> {
 
   @override
   Future<RollState> build() async {
-    print('RollNotifier build 실행!');
     final rollRepository = ref.watch(rollRepositoryProvider);
     var allRolls = await rollRepository.getAllRolls();
 
@@ -60,7 +59,6 @@ class RollNotifier extends AsyncNotifier<RollState> {
 
       // isActive 필터 (완료되지 않은 롤)
       if (localFilter.isActive != null) {
-        print(roll.status);
         final rollIsActive = roll.status != RollStatus.archived;
         if (rollIsActive != localFilter.isActive) {
           return false;
