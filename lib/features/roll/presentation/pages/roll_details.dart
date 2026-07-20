@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
+import 'package:record_of_life/features/roll/presentation/pages/capture_mode.dart';
 import 'package:record_of_life/features/roll/presentation/pages/picture_detail.dart';
+import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
-import 'package:record_of_life/shared/widgets/bottom_sheets/add_shot_bottom_sheet.dart';
 import 'package:record_of_life/shared/widgets/roll_card.dart';
 import 'package:record_of_life/shared/widgets/shot_card.dart';
 
@@ -131,21 +132,39 @@ class RollDetailsPage extends ConsumerWidget {
                 error: (error, stack) => Text('Error: $error'),
               ),
             ),
-            TextButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  useSafeArea: true,
-                  isScrollControlled: true,
-                  builder: (context) => Padding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).viewInsets.bottom,
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  final formNotifier = ref.read(
+                    newShotFormProvider(null).notifier,
+                  );
+                  formNotifier.reset();
+                  if (currentRoll.defaultLensId != null) {
+                    formNotifier.setLensId(currentRoll.defaultLensId);
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CaptureModePage(roll: currentRoll),
                     ),
-                    child: AddShotBottomSheet(rollId: roll.id),
+                  );
+                },
+                icon: const Icon(Icons.camera_alt),
+                label: const Text(
+                  '입력 모드 시작',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                );
-              },
-              child: Text('새 샷 추가'),
+                  elevation: 0,
+                ),
+              ),
             ),
           ],
         ),

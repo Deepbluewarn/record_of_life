@@ -53,12 +53,48 @@ class RollCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      currentRoll.title ?? '제목 없음',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            currentRoll.title ?? '제목 없음',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (currentRoll.hasFormatMismatch) ...[
+                          const SizedBox(width: 6),
+                          Tooltip(
+                            message:
+                                '카메라(${currentRoll.camera?.format}) · 필름(${currentRoll.film?.format}) 포맷 불일치',
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: Colors.amber[800]!,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                '⚠ 포맷',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.amber[900],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
 
                     Text(currentRoll.id, style: TextStyle(fontSize: 8)),

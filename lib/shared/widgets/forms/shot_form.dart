@@ -82,8 +82,6 @@ class ShotForm extends ConsumerWidget {
           label: '렌즈',
           value: lensState.when(
             data: (data) {
-              print('shotFormProvider.lensId: ${shotFormProvider.lensId}');
-              print(data.lenses);
               if (shotFormProvider.lensId == null || data.lenses.isEmpty) {
                 return null;
               }
@@ -150,6 +148,78 @@ class ShotForm extends ConsumerWidget {
                 .read(newShotFormProvider(shot).notifier)
                 .setExposureComp(exposureComp);
           },
+        ),
+        SizedBox(height: 24),
+
+        // ISO / 초점거리 (선택 — 미지정 시 필름/렌즈 값 상속)
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'ISO (push/pull)',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    initialValue: shotFormProvider.iso?.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: '필름 ISO 상속',
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    onChanged: (v) => ref
+                        .read(newShotFormProvider(shot).notifier)
+                        .setIso(int.tryParse(v)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '초점거리 (mm)',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    initialValue: shotFormProvider.focalLength?.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: '렌즈 값 상속',
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    onChanged: (v) => ref
+                        .read(newShotFormProvider(shot).notifier)
+                        .setFocalLength(int.tryParse(v)),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 24),
 

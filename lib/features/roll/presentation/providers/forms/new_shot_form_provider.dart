@@ -10,6 +10,8 @@ class NewShotFormState {
   final Aperture? aperture;
   final ShutterSpeed? shutterSpeed;
   final ExposureComp? exposureComp;
+  final int? iso;
+  final int? focalLength;
   final String? note;
   final int? rating;
   final String? imagePath;
@@ -20,6 +22,8 @@ class NewShotFormState {
     this.aperture,
     this.shutterSpeed,
     this.exposureComp,
+    this.iso,
+    this.focalLength,
     this.note,
     this.rating,
     this.imagePath,
@@ -31,6 +35,8 @@ class NewShotFormState {
     Aperture? aperture,
     ShutterSpeed? shutterSpeed,
     ExposureComp? exposureComp,
+    int? iso,
+    int? focalLength,
     String? note,
     int? rating,
     String? imagePath,
@@ -41,6 +47,8 @@ class NewShotFormState {
       aperture: aperture ?? this.aperture,
       shutterSpeed: shutterSpeed ?? this.shutterSpeed,
       exposureComp: exposureComp ?? this.exposureComp,
+      iso: iso ?? this.iso,
+      focalLength: focalLength ?? this.focalLength,
       note: note ?? this.note,
       rating: rating ?? this.rating,
       imagePath: imagePath ?? this.imagePath,
@@ -56,6 +64,8 @@ class NewShotFormState {
       aperture: aperture,
       shutterSpeed: shutterSpeed,
       exposureComp: exposureComp,
+      iso: iso,
+      focalLength: focalLength,
       note: note,
       rating: rating,
       imagePath: imagePath,
@@ -84,6 +94,8 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
         aperture: _shot.aperture,
         shutterSpeed: _shot.shutterSpeed,
         exposureComp: _shot.exposureComp,
+        iso: _shot.iso,
+        focalLength: _shot.focalLength,
         note: _shot.note,
         rating: _shot.rating,
         imagePath: _shot.imagePath,
@@ -92,40 +104,37 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
     return NewShotFormState();
   }
 
-  void setDate(DateTime? date) {
-    state = state.copyWith(date: date);
-  }
-
-  void setLensId(String? lensId) {
-    state = state.copyWith(lensId: lensId);
-  }
-
-  void setAperture(Aperture? aperture) {
-    state = state.copyWith(aperture: aperture);
-  }
-
-  void setShutterSpeed(ShutterSpeed? shutterSpeed) {
-    state = state.copyWith(shutterSpeed: shutterSpeed);
-  }
-
-  void setExposureComp(ExposureComp? exposureComp) {
-    state = state.copyWith(exposureComp: exposureComp);
-  }
-
-  void setNote(String? note) {
-    state = state.copyWith(note: note);
-  }
-
-  void setRating(int? rating) {
-    state = state.copyWith(rating: rating);
-  }
-
-  void setImagePath(String? imagePath) {
-    state = state.copyWith(imagePath: imagePath);
-  }
+  void setDate(DateTime? date) => state = state.copyWith(date: date);
+  void setLensId(String? lensId) => state = state.copyWith(lensId: lensId);
+  void setAperture(Aperture? aperture) =>
+      state = state.copyWith(aperture: aperture);
+  void setShutterSpeed(ShutterSpeed? shutterSpeed) =>
+      state = state.copyWith(shutterSpeed: shutterSpeed);
+  void setExposureComp(ExposureComp? exposureComp) =>
+      state = state.copyWith(exposureComp: exposureComp);
+  void setIso(int? iso) => state = state.copyWith(iso: iso);
+  void setFocalLength(int? focalLength) =>
+      state = state.copyWith(focalLength: focalLength);
+  void setNote(String? note) => state = state.copyWith(note: note);
+  void setRating(int? rating) => state = state.copyWith(rating: rating);
+  void setImagePath(String? imagePath) =>
+      state = state.copyWith(imagePath: imagePath);
 
   void reset() {
     state = NewShotFormState();
+  }
+
+  // 입력 모드에서 저장 후: 기술 세팅(조리개/셔터/노출/렌즈/iso/focal) 유지,
+  // 샷별 콘텐츠(평점/메모/사진)와 date는 리셋.
+  void resetForNextShot() {
+    state = NewShotFormState(
+      lensId: state.lensId,
+      aperture: state.aperture,
+      shutterSpeed: state.shutterSpeed,
+      exposureComp: state.exposureComp,
+      iso: state.iso,
+      focalLength: state.focalLength,
+    );
   }
 }
 

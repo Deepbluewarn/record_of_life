@@ -5,8 +5,10 @@ import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_roll_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
+import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
 import 'package:record_of_life/shared/widgets/dialogs/camera_selection_dialog.dart';
 import 'package:record_of_life/shared/widgets/dialogs/film_selection_dialog.dart';
+import 'package:record_of_life/shared/widgets/dialogs/lens_selection_dialog.dart';
 import 'package:record_of_life/shared/widgets/selectable_button.dart';
 import 'package:record_of_life/shared/widgets/selection_card.dart';
 import 'package:record_of_life/shared/widgets/simple_text_field.dart';
@@ -61,6 +63,7 @@ class AddRollPage extends ConsumerWidget {
                   showDialog(
                     context: context,
                     builder: (context) => FilmSelectionDialog(
+                      matchFormat: rollFormState.camera?.format,
                       onSelected: (film) {
                         ref
                             .read(newRollFormProvider(roll).notifier)
@@ -80,6 +83,7 @@ class AddRollPage extends ConsumerWidget {
                   showDialog(
                     context: context,
                     builder: (context) => CameraSelectionDialog(
+                      matchFormat: rollFormState.film?.format,
                       onSelected: (camera) {
                         ref
                             .read(newRollFormProvider(roll).notifier)
@@ -87,6 +91,41 @@ class AddRollPage extends ConsumerWidget {
                         Navigator.pop(context);
                       },
                     ),
+                  );
+                },
+              ),
+              SizedBox(height: 16),
+              // 기본 렌즈 (선택). 샷별 override 가능.
+              Consumer(
+                builder: (context, ref, _) {
+                  final lensState = ref.watch(lensProvider);
+                  final lensName = lensState.when(
+                    data: (data) {
+                      if (rollFormState.defaultLensId == null) return null;
+                      final match = data.lenses.where(
+                        (l) => l.id == rollFormState.defaultLensId,
+                      );
+                      return match.isEmpty ? null : match.first.name;
+                    },
+                    loading: () => null,
+                    error: (_, __) => null,
+                  );
+                  return SelectionCard(
+                    label: '기본 렌즈 (선택)',
+                    value: lensName,
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => LensSelectionDialog(
+                          onSelected: (lens) {
+                            ref
+                                .read(newRollFormProvider(roll).notifier)
+                                .setDefaultLensId(lens.id);
+                            Navigator.pop(context);
+                          },
+                        ),
+                      );
+                    },
                   );
                 },
               ),

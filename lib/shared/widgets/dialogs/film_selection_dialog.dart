@@ -7,67 +7,99 @@ import 'package:record_of_life/shared/widgets/bottom_sheets/add_film_bottom_shee
 
 class FilmSelectionDialog extends ConsumerWidget {
   final Function(Film) onSelected;
+  final String? matchFormat; // 매칭 필름을 상단으로 정렬 + 강조.
 
-  const FilmSelectionDialog({super.key, required this.onSelected});
+  const FilmSelectionDialog({
+    super.key,
+    required this.onSelected,
+    this.matchFormat,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filmState = ref.watch(filmProvider);
 
     return AlertDialog(
-      title: Text('필름 선택'),
+      title: const Text('필름 선택'),
       content: SizedBox(
         width: double.maxFinite,
         height: MediaQuery.of(context).size.height * 0.4,
         child: filmState.when(
-          data: (data) => ListView.builder(
-            itemCount: data.films.length + 1,
-            itemBuilder: (context, index) {
-              // 마지막 항목: 새 필름 추가 버튼
-              if (index == data.films.length) {
+          data: (data) {
+            final films = [...data.films];
+            if (matchFormat != null) {
+              films.sort((a, b) {
+                final aMatch = a.format == matchFormat ? 0 : 1;
+                final bMatch = b.format == matchFormat ? 0 : 1;
+                return aMatch - bMatch;
+              });
+            }
+            return ListView.builder(
+              itemCount: films.length + 1,
+              itemBuilder: (context, index) {
+                if (index == films.length) {
+                  return ListTile(
+                    leading: Icon(Icons.add, color: AppColors.primary),
+                    title: Text(
+                      '새 필름 추가',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        useSafeArea: true,
+                        isScrollControlled: true,
+                        builder: (context) => Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).viewInsets.bottom,
+                          ),
+                          child: AddFilmBottomSheet(),
+                        ),
+                      );
+                    },
+                  );
+                }
+                final film = films[index];
+                final mismatched =
+                    matchFormat != null && film.format != matchFormat;
                 return ListTile(
-                  leading: Icon(Icons.add, color: AppColors.primary),
                   title: Text(
-                    '새 필름 추가',
+                    film.name,
                     style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
+                      color: mismatched ? Colors.grey : null,
                     ),
                   ),
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      useSafeArea: true,
-                      isScrollControlled: true,
-                      builder: (context) => Padding(
-                        padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).viewInsets.bottom,
-                        ),
-                        child: AddFilmBottomSheet(),
-                      ),
-                    );
-                  },
+                  subtitle: Text(
+                    '${film.brand ?? 'Unknown'} · ${film.format ?? ''}',
+                    style: TextStyle(
+                      color: mismatched ? Colors.grey : null,
+                    ),
+                  ),
+                  trailing: mismatched
+                      ? const Icon(
+                          Icons.warning_amber,
+                          color: Colors.amber,
+                          size: 18,
+                        )
+                      : null,
+                  onTap: () => onSelected(film),
                 );
-              }
-              final film = data.films[index];
-              return ListTile(
-                title: Text(film.name),
-                subtitle: Text(
-                  '${film.brand ?? 'Unknown'} · ${film.format ?? ''}',
-                ),
-                onTap: () {
-                  onSelected(film);
-                },
-              );
-            },
-          ),
-          loading: () => Center(child: CircularProgressIndicator()),
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => Text('Error: $error'),
         ),
       ),
       backgroundColor: AppColors.surfaceLight,
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: Text('취소')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
       ],
     );
   }

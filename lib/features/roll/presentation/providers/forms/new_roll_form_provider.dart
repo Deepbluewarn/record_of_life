@@ -7,6 +7,7 @@ import 'package:record_of_life/domain/models/film.dart';
 class NewRollFormState {
   final Camera? camera;
   final Film? film;
+  final String? defaultLensId;
   final String? title;
   final int totalShots;
   final int? shotsDone;
@@ -18,6 +19,7 @@ class NewRollFormState {
   NewRollFormState({
     this.camera,
     this.film,
+    this.defaultLensId,
     this.title,
     this.totalShots = 36,
     this.shotsDone,
@@ -30,6 +32,7 @@ class NewRollFormState {
   NewRollFormState copyWith({
     Camera? camera,
     Film? film,
+    String? defaultLensId,
     String? title,
     int? totalShots,
     int? shotsDone,
@@ -41,6 +44,7 @@ class NewRollFormState {
     return NewRollFormState(
       camera: camera ?? this.camera,
       film: film ?? this.film,
+      defaultLensId: defaultLensId ?? this.defaultLensId,
       title: title ?? this.title,
       totalShots: totalShots ?? this.totalShots,
       shotsDone: shotsDone ?? this.shotsDone,
@@ -51,21 +55,21 @@ class NewRollFormState {
     );
   }
 
-  // 폼 완성도 체크 (저장 가능 여부)
   bool get isComplete {
     return camera != null && film != null && title != null;
   }
 
-  // Roll 객체로 변환 (저장할 때)
   Roll toRoll({String? rollId}) {
     return Roll(
       id: rollId,
       camera: camera,
       film: film,
+      defaultLensId: defaultLensId,
       title: title,
       totalShots: totalShots,
       shotsDone: shotsDone ?? 0,
       memo: memo,
+      startedAt: startedAt,
       endedAt: endedAt,
       status: status,
     );
@@ -79,11 +83,11 @@ class NewRollFormNotifier extends Notifier<NewRollFormState> {
 
   @override
   NewRollFormState build() {
-    // ✅ roll이 있으면 해당 데이터로 초기화
     if (_roll != null) {
       return NewRollFormState(
         camera: _roll.camera,
         film: _roll.film,
+        defaultLensId: _roll.defaultLensId,
         title: _roll.title,
         totalShots: _roll.totalShots,
         shotsDone: _roll.shotsDone,
@@ -104,6 +108,10 @@ class NewRollFormNotifier extends Notifier<NewRollFormState> {
 
   void setFilm(Film film) {
     state = state.copyWith(film: film);
+  }
+
+  void setDefaultLensId(String? lensId) {
+    state = state.copyWith(defaultLensId: lensId);
   }
 
   void setTitle(String title) {
