@@ -16,7 +16,7 @@ class HomePage extends ConsumerWidget {
     final rollState = ref.watch(rollProvider(RollFilter.active));
 
     return Scaffold(
-      appBar: CustomAppBar(title: '롤 | ROL', subtitle: 'Record Of Life'),
+      appBar: CustomAppBar(title: 'ROL', subtitle: '롤 목록'),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

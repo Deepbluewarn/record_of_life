@@ -14,7 +14,7 @@ class AllRollsPage extends ConsumerWidget {
     final rollState = ref.watch(rollProvider(RollFilter.all));
 
     return Scaffold(
-      appBar: CustomAppBar(title: '롤 | ROL', subtitle: '전체 롤'),
+      appBar: CustomAppBar(title: 'ROL', subtitle: '전체 롤'),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

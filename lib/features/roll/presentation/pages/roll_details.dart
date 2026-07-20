@@ -29,7 +29,7 @@ class RollDetailsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: '롤 | ROL',
+        title: 'ROL',
         subtitle: '롤 상세',
         actions: [
           IconButton(

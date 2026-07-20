@@ -26,7 +26,7 @@ class AddRollPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: '롤 | ROL',
+        title: 'ROL',
         subtitle: isEditMode ? '롤 편집' : '새 롤 추가',
       ),
       body: SingleChildScrollView(

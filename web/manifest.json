@@ -1,11 +1,11 @@
 {
-    "name": "record_of_life",
-    "short_name": "record_of_life",
+    "name": "ROL",
+    "short_name": "ROL",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "필름 사진 촬영 메타데이터 기록 및 EXIF export",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
