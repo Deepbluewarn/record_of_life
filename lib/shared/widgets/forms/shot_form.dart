@@ -12,7 +12,7 @@ import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
 import 'package:record_of_life/shared/widgets/dialogs/lens_selection_dialog.dart';
-import 'package:record_of_life/shared/widgets/horizontal_selector.dart';
+import 'package:record_of_life/shared/widgets/grid_selector.dart';
 import 'package:record_of_life/shared/widgets/selection_card.dart';
 
 class ShotForm extends ConsumerWidget {
@@ -112,42 +112,42 @@ class ShotForm extends ConsumerWidget {
         SizedBox(height: 24),
 
         // 조리개
-        HorizontalSelector<Aperture>(
+        GridSelector<Aperture>(
           title: '조리개 (f/)',
           items: Aperture.values,
           selectedItem: shotFormProvider.aperture,
-          labelBuilder: (aperture) => 'f/${aperture.value}',
-          onSelected: (aperture) {
-            ref.read(newShotFormProvider(shot).notifier).setAperture(aperture);
-          },
+          labelBuilder: (a) => 'f/${a.value}',
+          columns: 4,
+          cellHeight: 56,
+          onSelected: (a) =>
+              ref.read(newShotFormProvider(shot).notifier).setAperture(a),
         ),
         SizedBox(height: 24),
 
-        // 셔터 스피드
-        HorizontalSelector<ShutterSpeed>(
+        // 셔터 스피드 — 60+개라 스크롤 허용
+        GridSelector<ShutterSpeed>(
           title: '셔터 스피드',
           items: ShutterSpeed.values,
           selectedItem: shotFormProvider.shutterSpeed,
-          labelBuilder: (shutterSpeed) => shutterSpeed.label,
-          onSelected: (shutterSpeed) {
-            ref
-                .read(newShotFormProvider(shot).notifier)
-                .setShutterSpeed(shutterSpeed);
-          },
+          labelBuilder: (s) => s.label,
+          columns: 4,
+          cellHeight: 52,
+          maxHeight: 280,
+          onSelected: (s) =>
+              ref.read(newShotFormProvider(shot).notifier).setShutterSpeed(s),
         ),
         SizedBox(height: 24),
 
         // 노출 보정
-        HorizontalSelector<ExposureComp>(
+        GridSelector<ExposureComp>(
           title: '노출 보정 (E/V)',
           items: ExposureComp.values,
           selectedItem: shotFormProvider.exposureComp,
-          labelBuilder: (exposureComp) => exposureComp.label,
-          onSelected: (exposureComp) {
-            ref
-                .read(newShotFormProvider(shot).notifier)
-                .setExposureComp(exposureComp);
-          },
+          labelBuilder: (e) => e.label,
+          columns: 4,
+          cellHeight: 52,
+          onSelected: (e) =>
+              ref.read(newShotFormProvider(shot).notifier).setExposureComp(e),
         ),
         SizedBox(height: 24),
 
