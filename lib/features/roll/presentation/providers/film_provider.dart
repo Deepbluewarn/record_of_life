@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/film.dart';
-import 'package:record_of_life/infra/repositories_impl/film_repository_impl.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 
 class FilmState {
   final List<Film> films;
@@ -9,7 +9,7 @@ class FilmState {
 }
 
 class FilmNotifier extends AsyncNotifier<FilmState> {
-  final filmRepository = FilmRepositoryImpl();
+  late final filmRepository = ref.read(filmRepositoryProvider);
 
   @override
   Future<FilmState> build() async {

@@ -12,6 +12,7 @@ abstract class RollRepository {
     int? shotsDone,
     int? totalShots,
     RollStatus? status,
+    DateTime? startedAt,
     DateTime? endedAt,
   });
   Future<bool> deleteRoll(String rollId);

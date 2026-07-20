@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/lens.dart';
-import 'package:record_of_life/infra/repositories_impl/lens_repository_impl.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 
 class LensState {
   final List<Lens> lenses;
@@ -9,7 +9,7 @@ class LensState {
 }
 
 class LensNotifier extends AsyncNotifier<LensState> {
-  final lensRepository = LensRepositoryImpl();
+  late final lensRepository = ref.read(lensRepositoryProvider);
 
   @override
   Future<LensState> build() async {

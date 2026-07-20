@@ -1,45 +1,43 @@
-// Camera Repository Implementation
-
+import 'package:sembast/sembast.dart';
+import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/domain/models/camera.dart';
 import 'package:record_of_life/domain/repositories/camera_repository.dart';
 
 class CameraRepositoryImpl extends CameraRepository {
-  static final List<Camera> _cameras = [
-    Camera(title: 'Canon AE-1', brand: 'Canon', format: '35mm'),
-    Camera(title: 'Pentax K1000', brand: 'Pentax', format: '35mm'),
-    Camera(title: 'Rolleiflex', brand: 'Rollei', format: '120'),
-  ];
+  final AppStore _store;
+  CameraRepositoryImpl(this._store);
 
   @override
   Future<void> addCamera(Camera camera) async {
-    if (_cameras.any((c) => c.id == camera.id)) {
-      return;
-    }
-    _cameras.add(camera);
+    // put = upsert. add()는 중복 id에 예외 발생.
+    await AppStore.cameras.record(camera.id).put(_store.db, camera.toMap());
   }
 
   @override
   Future<bool> deleteCamera(String id) async {
-    _cameras.removeWhere((c) => c.id == id);
-
-    return true;
+    final removed = await AppStore.cameras.record(id).delete(_store.db);
+    return removed != null;
   }
 
   @override
   Future<List<Camera>> getCameras(List<String> ids) async {
-    return (_cameras.where((c) => ids.contains(c.id))).toList();
+    final snaps = await AppStore.cameras.records(ids).getSnapshots(_store.db);
+    return [
+      for (final s in snaps)
+        if (s != null) Camera.fromMap(Map<String, Object?>.from(s.value)),
+    ];
   }
 
   @override
   Future<List<Camera>> getAllCameras() async {
-    return [..._cameras];
+    final snaps = await AppStore.cameras.find(_store.db);
+    return snaps
+        .map((s) => Camera.fromMap(Map<String, Object?>.from(s.value)))
+        .toList();
   }
 
   @override
   Future<void> updateCamera(Camera camera) async {
-    final idx = _cameras.indexWhere((c) => c.id == camera.id);
-    if (idx >= 0) {
-      _cameras[idx] = camera;
-    }
+    await AppStore.cameras.record(camera.id).put(_store.db, camera.toMap());
   }
 }

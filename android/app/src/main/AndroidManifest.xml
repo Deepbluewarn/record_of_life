@@ -36,6 +36,12 @@
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <!-- 권한: 카메라 -->
+    <!-- <uses-permission android:name="android.permission.CAMERA" /> -->
+    <!-- 권한: 위치 (샷 저장 시 GPS 자동 기록, 사용자 허용 시) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

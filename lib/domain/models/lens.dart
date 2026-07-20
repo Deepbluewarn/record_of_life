@@ -3,13 +3,13 @@ import 'package:uuid/uuid.dart';
 class Lens {
   final String id;
   final String name;
-  String? brand; // Canon
-  int? focalLength; // 50
-  double? maxAperture; // 1.8
-  String? mount; // FD, EF, M42
-  String? coating; // S.S.C, T*
-  String? type; // Prime, Zoom
-  String? notes; // 코멘트
+  final String? brand;
+  final int? focalLength;
+  final double? maxAperture;
+  final String? mount;
+  final String? coating;
+  final String? type;
+  final String? notes;
 
   Lens({
     String? id,
@@ -22,4 +22,28 @@ class Lens {
     this.notes,
     this.type,
   }) : id = id ?? const Uuid().v4();
+
+  Map<String, Object?> toMap() => {
+    'id': id,
+    'name': name,
+    'brand': brand,
+    'focalLength': focalLength,
+    'maxAperture': maxAperture,
+    'mount': mount,
+    'coating': coating,
+    'type': type,
+    'notes': notes,
+  };
+
+  factory Lens.fromMap(Map<String, Object?> m) => Lens(
+    id: m['id'] as String,
+    name: m['name'] as String,
+    brand: m['brand'] as String?,
+    focalLength: m['focalLength'] as int?,
+    maxAperture: (m['maxAperture'] as num?)?.toDouble(),
+    mount: m['mount'] as String?,
+    coating: m['coating'] as String?,
+    type: m['type'] as String?,
+    notes: m['notes'] as String?,
+  );
 }

@@ -1,45 +1,42 @@
-// Film Repository Implementation
-
+import 'package:sembast/sembast.dart';
+import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/domain/models/film.dart';
 import 'package:record_of_life/domain/repositories/film_repository.dart';
 
 class FilmRepositoryImpl extends FilmRepository {
-  static final List<Film> _films = [
-    Film(name: 'Kodak Portra 400', brand: 'Kodak', iso: 400),
-    Film(name: 'Fujifilm Pro 400H', brand: 'Fujifilm', iso: 400),
-    Film(name: 'Ilford HP5 Plus', brand: 'Ilford', iso: 400),
-    Film(name: 'Tri-X 400', brand: 'Kodak', iso: 400),
-  ];
+  final AppStore _store;
+  FilmRepositoryImpl(this._store);
+
   @override
   Future<void> addFilm(Film film) async {
-    if (_films.any((f) => f.id == film.id)) {
-      return;
-    }
-    _films.add(film);
+    await AppStore.films.record(film.id).put(_store.db, film.toMap());
   }
 
   @override
   Future<bool> deleteFilm(String id) async {
-    _films.removeWhere((f) => f.id == id);
-
-    return true;
+    final removed = await AppStore.films.record(id).delete(_store.db);
+    return removed != null;
   }
 
   @override
   Future<List<Film>> getFilms(List<String> ids) async {
-    return (_films.where((t) => ids.contains(t.id))).toList();
+    final snaps = await AppStore.films.records(ids).getSnapshots(_store.db);
+    return [
+      for (final s in snaps)
+        if (s != null) Film.fromMap(Map<String, Object?>.from(s.value)),
+    ];
   }
 
   @override
   Future<List<Film>> getAllFilms() async {
-    return [..._films];
+    final snaps = await AppStore.films.find(_store.db);
+    return snaps
+        .map((s) => Film.fromMap(Map<String, Object?>.from(s.value)))
+        .toList();
   }
 
   @override
   Future<void> updateFilm(Film film) async {
-    final index = _films.indexWhere((f) => f.id == film.id);
-    if (index >= 0) {
-      _films[index] = film;
-    }
+    await AppStore.films.record(film.id).put(_store.db, film.toMap());
   }
 }

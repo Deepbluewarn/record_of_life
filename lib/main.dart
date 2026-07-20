@@ -1,11 +1,20 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/features/roll/presentation/pages/home_page.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
-void main() {
-  runApp(ProviderScope(child: MainApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final store = await AppStore.open();
+  runApp(
+    ProviderScope(
+      overrides: [appStoreProvider.overrideWithValue(store)],
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
@@ -25,7 +34,7 @@ class MainApp extends StatelessWidget {
           ),
         );
       },
-      home: HomePage(),
+      home: const HomePage(),
     );
   }
 }

@@ -1,52 +1,66 @@
-// Shot Repository Implementation
+import 'package:sembast/sembast.dart';
+import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/domain/repositories/shot_repository.dart';
 
 class ShotRepositoryImpl extends ShotRepository {
-  final List<Shot> _shots = [];
+  final AppStore _store;
+  ShotRepositoryImpl(this._store);
 
   @override
   Future<void> addShot(Shot shot) async {
-    _shots.add(shot);
+    await AppStore.shots.record(shot.id).put(_store.db, shot.toMap());
   }
 
   @override
   Future<bool> deleteShot(String id) async {
-    _shots.removeWhere((shot) => shot.id == id);
-
-    return true;
+    final removed = await AppStore.shots.record(id).delete(_store.db);
+    return removed != null;
   }
 
   @override
   Future<bool> deleteShotsByRollId(String rollId) async {
-    _shots.removeWhere((s) => s.rollId == rollId);
-
-    return true;
+    final removed = await AppStore.shots.delete(
+      _store.db,
+      finder: Finder(filter: Filter.equals('rollId', rollId)),
+    );
+    return removed > 0;
   }
 
   @override
   Future<List<Shot>> getShots(List<String> ids) async {
-    return (_shots.where((s) => ids.contains(s.id))).toList();
+    final snaps = await AppStore.shots.records(ids).getSnapshots(_store.db);
+    return [
+      for (final s in snaps)
+        if (s != null) Shot.fromMap(Map<String, Object?>.from(s.value)),
+    ];
   }
 
   @override
   Future<List<Shot>> getShotsByRollId(String? id) async {
-    if (id == null) {
-      return [];
-    }
-    return (_shots.where((s) => s.rollId == id)).toList();
+    if (id == null) return [];
+    final snaps = await AppStore.shots.find(
+      _store.db,
+      finder: Finder(
+        filter: Filter.equals('rollId', id),
+        sortOrders: [SortOrder('idx')],
+      ),
+    );
+    return snaps
+        .map((s) => Shot.fromMap(Map<String, Object?>.from(s.value)))
+        .toList();
   }
 
   @override
   Future<List<Shot>> getAllShots() async {
-    return [..._shots];
+    final snaps = await AppStore.shots.find(_store.db);
+    return snaps
+        .map((s) => Shot.fromMap(Map<String, Object?>.from(s.value)))
+        .toList();
   }
 
   @override
   Future<void> updateShot(Shot shot) async {
-    final idx = _shots.indexWhere((s) => s.id == shot.id);
-    if (idx > 0) {
-      _shots[idx] = shot;
-    }
+    await AppStore.shots.record(shot.id).put(_store.db, shot.toMap());
   }
 }

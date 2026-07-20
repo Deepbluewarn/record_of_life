@@ -74,9 +74,8 @@ class RollNotifier extends AsyncNotifier<RollState> {
   Future<void> addRoll(Roll roll) async {
     final rollRepository = ref.read(rollRepositoryProvider);
     await rollRepository.addRolls([roll]);
-    final rolls = await rollRepository.getAllRolls();
-
-    state = AsyncValue.data(RollState(rolls: rolls));
+    // family 전체 무효화 — 다른 필터 인스턴스도 refetch.
+    ref.invalidate(rollProvider);
   }
 
   Future<void> updateRoll(Roll roll) async {
@@ -109,10 +108,7 @@ class RollNotifier extends AsyncNotifier<RollState> {
       targetRollId: rollId,
     ).delete();
 
-    final rolls = await rollRepository.getAllRolls();
-
-    state = AsyncValue.data(RollState(rolls: rolls));
-
+    ref.invalidate(rollProvider);
     ref.invalidate(shotProvider(rollId));
   }
 }

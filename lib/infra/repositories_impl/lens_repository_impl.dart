@@ -1,39 +1,41 @@
-// Lens Repository Implementation
+import 'package:sembast/sembast.dart';
+import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/domain/models/lens.dart';
 import 'package:record_of_life/domain/repositories/lens_repository.dart';
 
 class LensRepositoryImpl extends LensRepository {
-  static final List<Lens> _lens = [];
+  final AppStore _store;
+  LensRepositoryImpl(this._store);
 
   Future<List<Lens>> getAllLenses() async {
-    return List.from(_lens);
+    final snaps = await AppStore.lenses.find(_store.db);
+    return snaps
+        .map((s) => Lens.fromMap(Map<String, Object?>.from(s.value)))
+        .toList();
   }
 
   @override
   Future<void> addLens(Lens lens) async {
-    if (_lens.any((l) => l.id == lens.id)) {
-      return;
-    }
-    _lens.add(lens);
+    await AppStore.lenses.record(lens.id).put(_store.db, lens.toMap());
   }
 
   @override
   Future<bool> deleteLens(String id) async {
-    _lens.removeWhere((l) => l.id == id);
-
-    return true;
+    final removed = await AppStore.lenses.record(id).delete(_store.db);
+    return removed != null;
   }
 
   @override
   Future<List<Lens>> getLenses(List<String> ids) async {
-    return (_lens.where((l) => ids.contains(l.id))).toList();
+    final snaps = await AppStore.lenses.records(ids).getSnapshots(_store.db);
+    return [
+      for (final s in snaps)
+        if (s != null) Lens.fromMap(Map<String, Object?>.from(s.value)),
+    ];
   }
 
   @override
   Future<void> updateLens(Lens lens) async {
-    final idx = _lens.indexWhere((l) => l.id != lens.id);
-    if (idx >= 0) {
-      _lens[idx] = lens;
-    }
+    await AppStore.lenses.record(lens.id).put(_store.db, lens.toMap());
   }
 }

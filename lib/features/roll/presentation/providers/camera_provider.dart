@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/camera.dart';
-import 'package:record_of_life/infra/repositories_impl/camera_repository_impl.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 
 class CameraState {
   final List<Camera> cameras;
@@ -9,7 +9,7 @@ class CameraState {
 }
 
 class CameraNotifier extends AsyncNotifier<CameraState> {
-  final cameraRepository = CameraRepositoryImpl();
+  late final cameraRepository = ref.read(cameraRepositoryProvider);
 
   @override
   Future<CameraState> build() async {

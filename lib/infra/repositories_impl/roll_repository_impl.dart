@@ -1,75 +1,47 @@
-// Roll Repository Implementation
+import 'package:sembast/sembast.dart';
+import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/domain/enums/roll_status.dart';
-import 'package:record_of_life/domain/models/camera.dart';
-import 'package:record_of_life/domain/models/film.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/domain/repositories/roll_repository.dart';
 
 class RollRepositoryImpl extends RollRepository {
-  final List<Roll> _rolls = [
-    Roll(
-      camera: Camera(title: 'Canon AE-1', brand: 'Canon', format: '35mm'),
-      film: Film(
-        name: 'Kodak Portra 400',
-        brand: 'Kodak',
-        iso: 400,
-        format: '35mm',
-      ),
-      title: '필름 이름 예제',
-      totalShots: 36,
-      shotsDone: 0,
-      memo: '일본 여행에서 촬영',
-      status: RollStatus.completed,
-      startedAt: DateTime(2025, 10, 25),
-      endedAt: DateTime(2025, 10, 28),
-    ),
-    Roll(
-      camera: Camera(title: 'Pentax K1000', brand: 'Pentax', format: '35mm'),
-      film: Film(
-        name: 'Fujifilm Superia 200',
-        brand: 'Fujifilm',
-        iso: 200,
-        format: '35mm',
-      ),
-      title: '가을 산책',
-      totalShots: 36,
-      shotsDone: 0,
-      memo: '공원에서의 자연 풍경',
-      status: RollStatus.inProgress,
-      startedAt: DateTime(2025, 10, 20),
-    ),
-    Roll(
-      camera: Camera(title: 'Rolleiflex', brand: 'Rollei', format: '120'),
-      film: Film(name: 'Tri-X 400', brand: 'Kodak', iso: 400, format: '120'),
-      title: '흑백 실험',
-      totalShots: 36,
-      shotsDone: 0,
-      memo: '흑백 필름 테스트',
-      status: RollStatus.inProgress,
-      startedAt: DateTime(2025, 10, 10),
-    ),
-  ];
+  final AppStore _store;
+  RollRepositoryImpl(this._store);
+
   @override
   Future<void> addRolls(List<Roll> newRolls) async {
-    _rolls.addAll(newRolls);
+    await _store.db.transaction((txn) async {
+      for (final r in newRolls) {
+        await AppStore.rolls.record(r.id).put(txn, r.toMap());
+      }
+    });
   }
 
   @override
   Future<bool> deleteRoll(String rollId) async {
-    final initialLength = _rolls.length;
-    _rolls.removeWhere((r) => r.id == rollId);
-    return _rolls.length < initialLength;
+    final removed = await AppStore.rolls.record(rollId).delete(_store.db);
+    return removed != null;
   }
 
   @override
   Future<List<Roll>> getRolls(List<String> rollIds) async {
-    if (rollIds.isEmpty) return _rolls;
-    return _rolls.where((r) => rollIds.contains(r.id)).toList();
+    if (rollIds.isEmpty) return getAllRolls();
+    final snaps = await AppStore.rolls.records(rollIds).getSnapshots(_store.db);
+    return [
+      for (final s in snaps)
+        if (s != null) Roll.fromMap(Map<String, Object?>.from(s.value)),
+    ];
   }
 
   @override
   Future<List<Roll>> getAllRolls() async {
-    return [..._rolls];
+    final snaps = await AppStore.rolls.find(
+      _store.db,
+      finder: Finder(sortOrders: [SortOrder('startedAt', false)]),
+    );
+    return snaps
+        .map((s) => Roll.fromMap(Map<String, Object?>.from(s.value)))
+        .toList();
   }
 
   @override
@@ -83,32 +55,33 @@ class RollRepositoryImpl extends RollRepository {
     DateTime? startedAt,
     DateTime? endedAt,
   }) async {
-    final index = _rolls.indexWhere((r) => r.id == rollId);
-    if (index >= 0) {
-      _rolls[index] = _rolls[index].copyWith(
-        title: title,
-        memo: memo,
-        shotsDone: shotsDone,
-        totalShots: totalShots,
-        status: status,
-        startedAt: startedAt,
-        endedAt: endedAt,
-      );
-    }
+    final snap = await AppStore.rolls.record(rollId).getSnapshot(_store.db);
+    if (snap == null) return;
+    final current = Roll.fromMap(Map<String, Object?>.from(snap.value));
+    final updated = current.copyWith(
+      title: title,
+      memo: memo,
+      shotsDone: shotsDone,
+      totalShots: totalShots,
+      status: status,
+      startedAt: startedAt,
+      endedAt: endedAt,
+    );
+    await AppStore.rolls.record(rollId).put(_store.db, updated.toMap());
   }
 
   @override
   Future<void> incrementShotsDone(String rollId) async {
-    final index = _rolls.indexWhere((r) => r.id == rollId);
-
-    if (index >= 0) {
-      final newShotsDone = _rolls[index].shotsDone + 1;
-      final totalShots = _rolls[index].totalShots;
-
-      if (newShotsDone > totalShots) {
-        return;
-      }
-      _rolls[index] = _rolls[index].copyWith(shotsDone: newShotsDone);
-    }
+    await _store.db.transaction((txn) async {
+      final snap = await AppStore.rolls.record(rollId).getSnapshot(txn);
+      if (snap == null) return;
+      final current = Roll.fromMap(Map<String, Object?>.from(snap.value));
+      final next = current.shotsDone + 1;
+      if (next > current.totalShots) return;
+      await AppStore.rolls.record(rollId).put(
+        txn,
+        current.copyWith(shotsDone: next).toMap(),
+      );
+    });
   }
 }
