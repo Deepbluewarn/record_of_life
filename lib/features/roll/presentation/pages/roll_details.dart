@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
+import 'package:record_of_life/features/export/export_service.dart';
 import 'package:record_of_life/features/roll/presentation/pages/capture_mode.dart';
 import 'package:record_of_life/features/roll/presentation/pages/picture_detail.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
@@ -32,6 +33,23 @@ class RollDetailsPage extends ConsumerWidget {
         title: 'ROL',
         subtitle: '롤 상세',
         actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share),
+            tooltip: 'exiftool JSON export',
+            onPressed: () async {
+              try {
+                await ref
+                    .read(exportServiceProvider)
+                    .exportRolls([currentRoll]);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Export 실패: $e')),
+                  );
+                }
+              }
+            },
+          ),
           IconButton(
             icon: Icon(Icons.edit),
             onPressed: () => Navigator.push(
