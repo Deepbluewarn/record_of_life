@@ -6,6 +6,7 @@ import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
+import 'package:record_of_life/features/settings/providers/settings_provider.dart';
 import 'package:record_of_life/shared/widgets/forms/shot_form.dart';
 
 // Sticky Capture Mode: 확인 누르면 저장 + 카운트 +1 + 화면 유지.
@@ -103,6 +104,12 @@ class _ConfirmBar extends ConsumerWidget {
     HapticFeedback.mediumImpact();
 
     if (!context.mounted) return;
+    // 손잡이에 따라 스낵바를 엄지 사거리(화면 하단 코너)로 몰아줌.
+    final handedness = ref.read(settingsProvider).value?.handedness;
+    final width = MediaQuery.of(context).size.width;
+    final EdgeInsets margin = handedness == Handedness.left
+        ? EdgeInsets.only(left: 16, right: width * 0.35, bottom: 16)
+        : EdgeInsets.only(left: width * 0.35, right: 16, bottom: 16);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -110,6 +117,7 @@ class _ConfirmBar extends ConsumerWidget {
           content: Text('#$nextFrame 저장됨'),
           duration: const Duration(milliseconds: 900),
           behavior: SnackBarBehavior.floating,
+          margin: margin,
         ),
       );
   }
