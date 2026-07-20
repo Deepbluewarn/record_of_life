@@ -21,166 +21,152 @@ class RollCard extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Row(
-          children: [
-            // 좌측: 썸네일
-            // Column(
-            //   crossAxisAlignment: CrossAxisAlignment.start,
-            //   children: [
-            //     // 썸네일 (더미)
-            //     Container(
-            //       width: 80,
-            //       height: 80,
-            //       decoration: BoxDecoration(
-            //         color: Colors.grey[300],
-            //         borderRadius: BorderRadius.circular(8),
-            //       ),
-            //     ),
-            //   ],
-            // ),
-            // const SizedBox(width: 16),
-            // 중간: 제목 + 날짜
-            Expanded(
-              child: SizedBox(
-                height: 80,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            currentRoll.title ?? '제목 없음',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (currentRoll.hasFormatMismatch) ...[
-                          const SizedBox(width: 6),
-                          Tooltip(
-                            message:
-                                '카메라(${currentRoll.camera?.format}) · 필름(${currentRoll.film?.format}) 포맷 불일치',
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: Colors.amber[800]!,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                '⚠ 포맷',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.amber[900],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-
-                    Text(currentRoll.id, style: TextStyle(fontSize: 8)),
-                    Text(
-                      _formatDate(currentRoll.startedAt),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            // 우측: 카메라, 필름, 상태 (세로)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // 카메라
-                Text(
-                  currentRoll.camera?.title ?? '카메라 선택 안함',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  textAlign: TextAlign.right,
-                ),
-                const SizedBox(height: 4),
-                // 필름
-                Text(
-                  currentRoll.film?.name ?? '필름 선택 안함',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  textAlign: TextAlign.right,
-                ),
-                const SizedBox(height: 12),
-                // 우측 하단: 진행도 + 상태 (Row)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // 진행도
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                    Flexible(
                       child: Text(
-                        '${currentRoll.shotsDone}/${currentRoll.totalShots}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.secondary,
-                        ),
+                        currentRoll.title ?? '제목 없음',
+                        style: Theme.of(context).textTheme.titleMedium,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // 상태
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                    if (currentRoll.hasFormatMismatch) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      _MismatchBadge(
+                        camera: currentRoll.camera?.format,
+                        film: currentRoll.film?.format,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.orange, width: 1),
-                      ),
-                      child: Text(
-                        currentRoll.status.displayName(context),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  _formatDate(currentRoll.startedAt),
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                currentRoll.camera?.title ?? '카메라 미선택',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              Text(
+                currentRoll.film?.name ?? '필름 미선택',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  _Pill(
+                    label: '${currentRoll.shotsDone}/${currentRoll.totalShots}',
+                    strong: true,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  _StatusDot(status: currentRoll.status),
+                  const SizedBox(width: 4),
+                  Text(
+                    currentRoll.status.displayName(context),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  String _formatDate(DateTime? dateTime) {
-    if (dateTime == null) return '날짜 미정';
-    return '${dateTime.year}. ${dateTime.month}. ${dateTime.day}';
+  String _formatDate(DateTime? d) {
+    if (d == null) return '날짜 미정';
+    return '${d.year}. ${d.month.toString().padLeft(2, '0')}. '
+        '${d.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _Pill extends StatelessWidget {
+  final String label;
+  final bool strong;
+  const _Pill({required this.label, this.strong = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: strong ? AppColors.ink : AppColors.surface,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: strong ? Colors.white : AppColors.ink,
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusDot extends StatelessWidget {
+  final RollStatus status;
+  const _StatusDot({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: status.displayColor,
+      ),
+    );
+  }
+}
+
+class _MismatchBadge extends StatelessWidget {
+  final String? camera;
+  final String? film;
+  const _MismatchBadge({this.camera, this.film});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: '카메라($camera) · 필름($film) 포맷 불일치',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.borderStrong),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: const Text(
+          '⚠',
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
   }
 }

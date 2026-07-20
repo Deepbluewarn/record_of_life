@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:record_of_life/shared/theme/app_theme.dart';
 
 class SelectionCard extends StatelessWidget {
   final String label;
@@ -14,14 +15,19 @@ class SelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final empty = value == null || value!.isEmpty;
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[200]!),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey[50],
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          color: AppColors.background,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -29,26 +35,19 @@ class SelectionCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(label, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 4),
                 Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  value ?? '선택하기',
+                  empty ? '선택하기' : value!,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: value != null ? Colors.black : Colors.grey[400],
+                    fontWeight: FontWeight.w700,
+                    color: empty ? AppColors.inkMuted : AppColors.ink,
                   ),
                 ),
               ],
             ),
-            Icon(Icons.chevron_right, color: Colors.grey[400]),
+            const Icon(Icons.chevron_right, color: AppColors.inkMuted),
           ],
         ),
       ),

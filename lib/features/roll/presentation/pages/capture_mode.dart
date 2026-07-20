@@ -7,6 +7,7 @@ import 'package:record_of_life/features/roll/presentation/providers/forms/new_sh
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 import 'package:record_of_life/features/settings/providers/settings_provider.dart';
+import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/forms/shot_form.dart';
 
 // Sticky Capture Mode: 확인 누르면 저장 + 카운트 +1 + 화면 유지.
@@ -28,12 +29,7 @@ class CaptureModePage extends ConsumerWidget {
     final total = currentRoll.totalShots;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('입력 모드 · $nextFrame / $total'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: Text('입력 모드 · $nextFrame / $total')),
       body: SafeArea(
         child: Column(
           children: [
@@ -63,27 +59,18 @@ class _ConfirmBar extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: SizedBox(
         width: double.infinity,
         height: 64,
         child: ElevatedButton(
           onPressed: canSave ? () => _save(context, ref) : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: Colors.grey[300],
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 0,
-          ),
           child: Text(
             '확인 · #$nextFrame 저장',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
         ),
       ),
