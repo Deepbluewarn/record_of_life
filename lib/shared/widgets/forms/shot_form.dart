@@ -15,6 +15,13 @@ import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/dialogs/lens_selection_dialog.dart';
 import 'package:record_of_life/shared/widgets/grid_selector.dart';
 import 'package:record_of_life/shared/widgets/selection_card.dart';
+import 'package:record_of_life/shared/widgets/wheel_selector.dart';
+
+// 야외 촬영에서 흔히 조정하는 ISO 후보. 첫 항목 null = '필름 ISO 상속'.
+const List<int?> _commonIsos = [
+  null, 25, 50, 100, 125, 160, 200, 250, 320, 400, 500, 640,
+  800, 1000, 1250, 1600, 2000, 2500, 3200, 6400,
+];
 
 class ShotForm extends ConsumerWidget {
   final Shot? shot;
@@ -66,26 +73,21 @@ class ShotForm extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.xl),
 
-        GridSelector<Aperture>(
+        WheelSelector<Aperture>(
           title: '조리개 (f/)',
           items: Aperture.values,
           selectedItem: form.aperture,
           labelBuilder: (a) => 'f/${a.value}',
-          columns: 4,
-          cellHeight: 56,
           onSelected: (a) =>
               ref.read(newShotFormProvider(shot).notifier).setAperture(a),
         ),
         const SizedBox(height: AppSpacing.xl),
 
-        GridSelector<ShutterSpeed>(
+        WheelSelector<ShutterSpeed>(
           title: '셔터 스피드',
           items: ShutterSpeed.values,
           selectedItem: form.shutterSpeed,
           labelBuilder: (s) => s.label,
-          columns: 4,
-          cellHeight: 52,
-          maxHeight: 280,
           onSelected: (s) =>
               ref.read(newShotFormProvider(shot).notifier).setShutterSpeed(s),
         ),
@@ -103,30 +105,22 @@ class ShotForm extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.xl),
 
-        Row(
-          children: [
-            Expanded(
-              child: _MiniNumberField(
-                label: 'ISO (push/pull)',
-                initial: form.iso?.toString(),
-                hint: '필름 ISO 상속',
-                onChanged: (v) => ref
-                    .read(newShotFormProvider(shot).notifier)
-                    .setIso(int.tryParse(v)),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(
-              child: _MiniNumberField(
-                label: '초점거리 (mm)',
-                initial: form.focalLength?.toString(),
-                hint: '렌즈 값 상속',
-                onChanged: (v) => ref
-                    .read(newShotFormProvider(shot).notifier)
-                    .setFocalLength(int.tryParse(v)),
-              ),
-            ),
-          ],
+        WheelSelector<int?>(
+          title: 'ISO (push/pull, 미지정 = 필름 값 상속)',
+          items: _commonIsos,
+          selectedItem: form.iso,
+          labelBuilder: (v) => v == null ? '상속' : v.toString(),
+          onSelected: (v) =>
+              ref.read(newShotFormProvider(shot).notifier).setIso(v),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        _MiniNumberField(
+          label: '초점거리 (mm)',
+          initial: form.focalLength?.toString(),
+          hint: '렌즈 값 상속',
+          onChanged: (v) => ref
+              .read(newShotFormProvider(shot).notifier)
+              .setFocalLength(int.tryParse(v)),
         ),
         const SizedBox(height: AppSpacing.xl),
 
