@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/features/roll/presentation/providers/film_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_film_form_provider.dart';
 import 'package:record_of_life/shared/constants/film_constants.dart';
+import 'package:record_of_life/shared/widgets/bottom_sheets/sheet_shell.dart';
 
 class AddFilmBottomSheet extends ConsumerStatefulWidget {
   const AddFilmBottomSheet({super.key});
@@ -12,285 +13,127 @@ class AddFilmBottomSheet extends ConsumerStatefulWidget {
 }
 
 class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
-  String? _selectedBrand;
-  String? _selectedIso;
-  String? _selectedFormat;
-  bool _isCustomBrand = false;
-  bool _isCustomIso = false;
-  bool _isCustomFormat = false;
+  String? _brand;
+  String? _iso;
+  String? _format;
+  bool get _customBrand => _brand == '기타 (직접 입력)';
+  bool get _customIso => _iso == '기타 (직접 입력)';
+  bool get _customFormat => _format == '기타 (직접 입력)';
 
   @override
   Widget build(BuildContext context) {
-    final filmFormProvider = ref.watch(newFilmFormProvider);
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 드래그 핸들
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '새 필름 추가',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    IconButton(
-                      padding: EdgeInsets.all(14),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20),
-
-                // 필름명
-                TextField(
-                  onChanged: (value) {
-                    ref.read(newFilmFormProvider.notifier).setName(value);
-                  },
-                  decoration: InputDecoration(
-                    labelText: '필름명 *',
-                    hintText: '예: Portra 400',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                ),
-                SizedBox(height: 16),
-
-                // 제조사 선택
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedBrand,
-                  decoration: InputDecoration(
-                    labelText: '제조사 *',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  items: FilmConstants.commonBrands.map((brand) {
-                    return DropdownMenuItem(value: brand, child: Text(brand));
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedBrand = value;
-                      _isCustomBrand = value == '기타 (직접 입력)';
-                      if (!_isCustomBrand && value != null) {
-                        ref.read(newFilmFormProvider.notifier).setBrand(value);
-                      }
-                    });
-                  },
-                ),
-                if (_isCustomBrand) ...[
-                  SizedBox(height: 12),
-                  TextField(
-                    onChanged: (value) {
-                      ref.read(newFilmFormProvider.notifier).setBrand(value);
-                    },
-                    decoration: InputDecoration(
-                      labelText: '제조사 직접 입력',
-                      hintText: '예: Rollei',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                    ),
-                  ),
-                ],
-                SizedBox(height: 16),
-
-                // ISO 선택
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedIso,
-                  decoration: InputDecoration(
-                    labelText: 'ISO *',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  items: FilmConstants.commonIsos.map((iso) {
-                    return DropdownMenuItem(value: iso, child: Text(iso));
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedIso = value;
-                      _isCustomIso = value == '기타 (직접 입력)';
-                      if (!_isCustomIso && value != null) {
-                        final isoValue = int.tryParse(value);
-                        ref.read(newFilmFormProvider.notifier).setIso(isoValue);
-                      }
-                    });
-                  },
-                ),
-                if (_isCustomIso) ...[
-                  SizedBox(height: 12),
-                  TextField(
-                    onChanged: (value) {
-                      final isoValue = int.tryParse(value);
-                      ref.read(newFilmFormProvider.notifier).setIso(isoValue);
-                    },
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'ISO 직접 입력',
-                      hintText: '예: 125',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                    ),
-                  ),
-                ],
-                SizedBox(height: 16),
-
-                // 포맷 선택
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedFormat,
-                  decoration: InputDecoration(
-                    labelText: '포맷 *',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  items: FilmConstants.commonFormats.map((format) {
-                    return DropdownMenuItem(value: format, child: Text(format));
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedFormat = value;
-                      _isCustomFormat = value == '기타 (직접 입력)';
-                      if (!_isCustomFormat && value != null) {
-                        ref.read(newFilmFormProvider.notifier).setFormat(value);
-                      }
-                    });
-                  },
-                ),
-                if (_isCustomFormat) ...[
-                  SizedBox(height: 12),
-                  TextField(
-                    onChanged: (value) {
-                      ref.read(newFilmFormProvider.notifier).setFormat(value);
-                    },
-                    decoration: InputDecoration(
-                      labelText: '포맷 직접 입력',
-                      hintText: '예: APS',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                    ),
-                  ),
-                ],
-                SizedBox(height: 16),
-
-                // 메모
-                TextField(
-                  onChanged: (value) {
-                    ref.read(newFilmFormProvider.notifier).setNote(value);
-                  },
-                  decoration: InputDecoration(
-                    labelText: '메모 (선택사항)',
-                    hintText: '필름에 대한 추가 정보를 입력하세요',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                    alignLabelWithHint: true,
-                  ),
-                  maxLines: 3,
-                ),
-                SizedBox(height: 24),
-
-                // 추가 버튼
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: filmFormProvider.when(
-                    data: (formState) => ElevatedButton(
-                      onPressed: () {
-                        ref
-                            .read(filmProvider.notifier)
-                            .addFilm(formState.toFilm());
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        '필름 추가하기',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    loading: () => ElevatedButton(
-                      onPressed: null,
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text('추가 중...'),
-                    ),
-                    error: (error, stackTrace) => ElevatedButton(
-                      onPressed: null,
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text('오류 발생'),
-                    ),
-                  ),
-                ),
-              ],
+    final formState = ref.watch(newFilmFormProvider);
+    return BottomSheetShell(
+      title: '새 필름 추가',
+      saveLabel: '필름 추가하기',
+      onSave: formState.whenOrNull(
+        data: (state) => () {
+          ref.read(filmProvider.notifier).addFilm(state.toFilm());
+          Navigator.pop(context);
+        },
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            onChanged: (v) =>
+                ref.read(newFilmFormProvider.notifier).setName(v),
+            decoration: const InputDecoration(
+              labelText: '필름명 *',
+              hintText: '예: Portra 400',
             ),
           ),
-        ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            initialValue: _brand,
+            decoration: const InputDecoration(labelText: '제조사 *'),
+            items: FilmConstants.commonBrands
+                .map((b) => DropdownMenuItem(value: b, child: Text(b)))
+                .toList(),
+            onChanged: (v) {
+              setState(() => _brand = v);
+              if (v != null && !_customBrand) {
+                ref.read(newFilmFormProvider.notifier).setBrand(v);
+              }
+            },
+          ),
+          if (_customBrand) ...[
+            const SizedBox(height: 12),
+            TextField(
+              onChanged: (v) =>
+                  ref.read(newFilmFormProvider.notifier).setBrand(v),
+              decoration: const InputDecoration(
+                labelText: '제조사 직접 입력',
+                hintText: '예: Rollei',
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            initialValue: _iso,
+            decoration: const InputDecoration(labelText: 'ISO *'),
+            items: FilmConstants.commonIsos
+                .map((i) => DropdownMenuItem(value: i, child: Text(i)))
+                .toList(),
+            onChanged: (v) {
+              setState(() => _iso = v);
+              if (v != null && !_customIso) {
+                ref
+                    .read(newFilmFormProvider.notifier)
+                    .setIso(int.tryParse(v));
+              }
+            },
+          ),
+          if (_customIso) ...[
+            const SizedBox(height: 12),
+            TextField(
+              keyboardType: TextInputType.number,
+              onChanged: (v) => ref
+                  .read(newFilmFormProvider.notifier)
+                  .setIso(int.tryParse(v)),
+              decoration: const InputDecoration(
+                labelText: 'ISO 직접 입력',
+                hintText: '예: 125',
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            initialValue: _format,
+            decoration: const InputDecoration(labelText: '포맷 *'),
+            items: FilmConstants.commonFormats
+                .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                .toList(),
+            onChanged: (v) {
+              setState(() => _format = v);
+              if (v != null && !_customFormat) {
+                ref.read(newFilmFormProvider.notifier).setFormat(v);
+              }
+            },
+          ),
+          if (_customFormat) ...[
+            const SizedBox(height: 12),
+            TextField(
+              onChanged: (v) =>
+                  ref.read(newFilmFormProvider.notifier).setFormat(v),
+              decoration: const InputDecoration(
+                labelText: '포맷 직접 입력',
+                hintText: '예: APS',
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          TextField(
+            onChanged: (v) =>
+                ref.read(newFilmFormProvider.notifier).setNote(v),
+            decoration: const InputDecoration(
+              labelText: '메모 (선택)',
+              hintText: '필름 특성, 유통기한 등',
+              alignLabelWithHint: true,
+            ),
+            maxLines: 3,
+          ),
+        ],
       ),
     );
   }
