@@ -38,9 +38,14 @@ class HomePage extends ConsumerWidget {
               child: rollState.when(
                 data: (rollData) {
                   if (rollData.rolls.isEmpty) {
-                    return Center(child: Text('저장된 롤이 없습니다'));
-                  } else {
-                    // print(rollData.rolls[0].toString());
+                    return _EmptyState(
+                      onCreate: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AddRollPage(),
+                        ),
+                      ),
+                    );
                   }
                   return ListView.separated(
                     itemBuilder: (BuildContext context, int index) {
@@ -86,6 +91,43 @@ class HomePage extends ConsumerWidget {
                 );
               },
               child: Text('새 롤 추가'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final VoidCallback onCreate;
+  const _EmptyState({required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.camera_roll_outlined, size: 56),
+            const SizedBox(height: 16),
+            Text(
+              '진행 중인 롤이 없습니다',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '카메라·필름을 골라 첫 롤을 만들어 보세요.',
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: onCreate,
+              icon: const Icon(Icons.add),
+              label: const Text('첫 롤 만들기'),
             ),
           ],
         ),
