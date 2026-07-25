@@ -48,6 +48,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.0
+  flutter_native_splash: ^2.4.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -58,6 +60,30 @@ dev_dependencies:
   
   custom_lint:
   riverpod_lint: ^3.0.3
+
+# 스플래시(현재는 흰 배경만 — 아이콘 PNG 추가 후 image 필드 활성화).
+# 재생성: `dart run flutter_native_splash:create`
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#111111"
+  # image: assets/icon/icon.png
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#111111"
+
+# 런처 아이콘. assets/icon/icon.png (1024x1024) 준비 후:
+# `dart run flutter_launcher_icons`
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    background_color: "#FFFFFF"
+    theme_color: "#111111"
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/icon.png"
+  min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
