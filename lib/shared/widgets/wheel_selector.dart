@@ -88,33 +88,50 @@ class _WheelSelectorState<T> extends State<WheelSelector<T>> {
         SizedBox(
           height: _height,
           child: Stack(
+            alignment: Alignment.center,
             children: [
-              RotatedBox(
-                quarterTurns: 3,
-                child: ListWheelScrollView.useDelegate(
-                  controller: _controller,
-                  itemExtent: _itemExtent,
-                  physics: const FixedExtentScrollPhysics(),
-                  perspective: 0.003,
-                  diameterRatio: 2.2,
-                  onSelectedItemChanged: (i) {
-                    if (i != _lastIndex) {
-                      _lastIndex = i;
-                      HapticFeedback.selectionClick();
-                      widget.onSelected(widget.items[i]);
-                    }
-                  },
-                  childDelegate: ListWheelChildBuilderDelegate(
-                    childCount: widget.items.length,
-                    builder: (context, i) => RotatedBox(
-                      quarterTurns: 1,
-                      child: Center(
-                        child: Text(
-                          widget.labelBuilder(widget.items[i]),
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.ink,
+              const _CenterPill(width: _itemExtent, height: 44),
+              ShaderMask(
+                shaderCallback: (rect) => const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black,
+                    Colors.black,
+                    Colors.transparent,
+                  ],
+                  stops: [0.0, 0.22, 0.78, 1.0],
+                ).createShader(rect),
+                blendMode: BlendMode.dstIn,
+                child: RotatedBox(
+                  quarterTurns: 3,
+                  child: ListWheelScrollView.useDelegate(
+                    controller: _controller,
+                    itemExtent: _itemExtent,
+                    physics: const FixedExtentScrollPhysics(),
+                    perspective: 0.0022,
+                    diameterRatio: 3.0,
+                    onSelectedItemChanged: (i) {
+                      if (i != _lastIndex) {
+                        _lastIndex = i;
+                        HapticFeedback.lightImpact();
+                        widget.onSelected(widget.items[i]);
+                      }
+                    },
+                    childDelegate: ListWheelChildBuilderDelegate(
+                      childCount: widget.items.length,
+                      builder: (context, i) => RotatedBox(
+                        quarterTurns: 1,
+                        child: Center(
+                          child: Text(
+                            widget.labelBuilder(widget.items[i]),
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                              letterSpacing: 0.2,
+                            ),
                           ),
                         ),
                       ),
@@ -122,7 +139,6 @@ class _WheelSelectorState<T> extends State<WheelSelector<T>> {
                   ),
                 ),
               ),
-              const _CenterMarker(),
             ],
           ),
         ),
@@ -170,20 +186,20 @@ class _SectionChips<T> extends StatelessWidget {
   }
 }
 
-class _CenterMarker extends StatelessWidget {
-  const _CenterMarker();
+class _CenterPill extends StatelessWidget {
+  final double width;
+  final double height;
+  const _CenterPill({required this.width, required this.height});
 
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 2, height: 6, color: AppColors.ink),
-            const SizedBox(height: 48),
-            Container(width: 2, height: 6, color: AppColors.ink),
-          ],
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       ),
     );
