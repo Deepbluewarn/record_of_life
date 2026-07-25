@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/enums/roll_status.dart';
 import 'package:record_of_life/domain/models/roll.dart';
-import 'package:record_of_life/domain/usecases/delete_roll.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 
@@ -103,11 +102,8 @@ class RollNotifier extends AsyncNotifier<RollState> {
     final rollRepository = ref.read(rollRepositoryProvider);
     final shotRepository = ref.read(shotRepositoryProvider);
 
-    await DeleteRoll(
-      rollRepository: rollRepository,
-      shotRepository: shotRepository,
-      targetRollId: rollId,
-    ).delete();
+    await shotRepository.deleteShotsByRollId(rollId);
+    await rollRepository.deleteRoll(rollId);
 
     ref.invalidate(rollProvider);
     ref.invalidate(shotProvider(rollId));
