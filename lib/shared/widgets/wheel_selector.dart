@@ -10,6 +10,8 @@ class WheelSelector<T> extends StatefulWidget {
   final T? selectedItem;
   final String Function(T) labelBuilder;
   final ValueChanged<T> onSelected;
+  // 긴 목록용 섹션 점프 칩. 라벨 → 대표 item.
+  final Map<String, T>? sections;
 
   const WheelSelector({
     super.key,
@@ -18,10 +20,28 @@ class WheelSelector<T> extends StatefulWidget {
     required this.selectedItem,
     required this.labelBuilder,
     required this.onSelected,
+    this.sections,
   });
 
   @override
   State<WheelSelector<T>> createState() => _WheelSelectorState<T>();
+}
+
+// 관성 감속 없이 손 뗄 때 즉시 정지. 이후 snap animateTo가 근처 값으로 붙임.
+class _NoInertiaPhysics extends ScrollPhysics {
+  const _NoInertiaPhysics({super.parent});
+
+  @override
+  _NoInertiaPhysics applyTo(ScrollPhysics? ancestor) =>
+      _NoInertiaPhysics(parent: buildParent(ancestor));
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    return null;
+  }
 }
 
 class _WheelSelectorState<T> extends State<WheelSelector<T>> {
@@ -106,6 +126,19 @@ class _WheelSelectorState<T> extends State<WheelSelector<T>> {
       children: [
         Text(widget.title, style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: AppSpacing.sm),
+        if (widget.sections != null) _SectionChips<T>(
+          sections: widget.sections!,
+          onJump: (item) {
+            final idx = widget.items.indexOf(item);
+            if (idx < 0 || !_controller.hasClients) return;
+            _controller.animateTo(
+              idx * _itemExtent,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+            );
+          },
+        ),
+        if (widget.sections != null) const SizedBox(height: AppSpacing.sm),
         SizedBox(
           height: _height,
           child: LayoutBuilder(
@@ -118,7 +151,7 @@ class _WheelSelectorState<T> extends State<WheelSelector<T>> {
                     ListView.builder(
                       controller: _controller,
                       scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
+                      physics: const _NoInertiaPhysics(),
                       padding: EdgeInsets.symmetric(horizontal: sidePad),
                       itemExtent: _itemExtent,
                       itemCount: widget.items.length,
@@ -165,22 +198,21 @@ class _WheelItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        double offset = 0;
-        if (controller.hasClients) offset = controller.offset;
-        final page = offset / itemExtent;
-        final distance = (page - index).abs().clamp(0.0, 1.5);
-        final scale = 1.0 - (distance * 0.25);
-        final opacity = (1.0 - (distance * 0.55)).clamp(0.2, 1.0);
-        final selected = distance < 0.5;
-        return GestureDetector(
-          onTap: onTap,
-          behavior: HitTestBehavior.opaque,
-          child: Center(
-            child: Opacity(
-              opacity: opacity,
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            final offset = controller.hasClients ? controller.offset : 0.0;
+            final page = offset / itemExtent;
+            final distance = (page - index).abs().clamp(0.0, 1.5);
+            // save-layer 유발하는 Opacity 위젯 대신 텍스트 컬러 alpha로 처리.
+            final alpha = (1.0 - (distance * 0.55)).clamp(0.2, 1.0);
+            final scale = 1.0 - (distance * 0.25);
+            final selected = distance < 0.5;
+            return Center(
               child: Transform.scale(
                 scale: scale,
                 child: Text(
@@ -188,14 +220,56 @@ class _WheelItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
-                    color: AppColors.ink,
+                    color: AppColors.ink.withValues(alpha: alpha),
                   ),
                 ),
               ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionChips<T> extends StatelessWidget {
+  final Map<String, T> sections;
+  final ValueChanged<T> onJump;
+  const _SectionChips({required this.sections, required this.onJump});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 28,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: sections.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        itemBuilder: (context, i) {
+          final entry = sections.entries.elementAt(i);
+          return InkWell(
+            onTap: () => onJump(entry.value),
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                entry.key,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

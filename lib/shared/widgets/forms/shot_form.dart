@@ -87,6 +87,13 @@ class ShotForm extends ConsumerWidget {
           items: ShutterSpeed.values,
           selectedItem: form.shutterSpeed,
           labelBuilder: (s) => s.label,
+          sections: {
+            '고속': ShutterSpeed.s1_1000,
+            '중간': ShutterSpeed.s1_125,
+            '저속': ShutterSpeed.s1_8,
+            '장노출': ShutterSpeed.s1_0,
+            '특수': ShutterSpeed.bulb,
+          },
           onSelected: (s) =>
               ref.read(newShotFormProvider(shot).notifier).setShutterSpeed(s),
         ),
