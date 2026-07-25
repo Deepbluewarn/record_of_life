@@ -9,9 +9,10 @@ import 'package:record_of_life/features/roll/presentation/providers/shot_provide
 class RollFilter {
   final String? rollId;
   final RollStatus? status;
+  final Set<RollStatus>? statuses;
   final bool? isActive; // true = archived 제외
 
-  const RollFilter({this.rollId, this.status, this.isActive});
+  const RollFilter({this.rollId, this.status, this.statuses, this.isActive});
 
   static const all = RollFilter();
   static const active = RollFilter(isActive: true);
@@ -19,6 +20,10 @@ class RollFilter {
   static const inProgress = RollFilter(status: RollStatus.inProgress);
   static const completed = RollFilter(status: RollStatus.completed);
   static const archived = RollFilter(status: RollStatus.archived);
+  // 홈에 노출: 사용자가 지금 작업 중이거나 촬영을 시작하기 전 상태.
+  static const working = RollFilter(
+    statuses: {RollStatus.planning, RollStatus.inProgress},
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -27,10 +32,19 @@ class RollFilter {
           runtimeType == other.runtimeType &&
           rollId == other.rollId &&
           status == other.status &&
+          _setEq(statuses, other.statuses) &&
           isActive == other.isActive;
 
   @override
-  int get hashCode => Object.hash(rollId, status, isActive);
+  int get hashCode =>
+      Object.hash(rollId, status, statuses == null ? null : Object.hashAllUnordered(statuses!), isActive);
+}
+
+bool _setEq(Set<RollStatus>? a, Set<RollStatus>? b) {
+  if (identical(a, b)) return true;
+  if (a == null || b == null) return false;
+  if (a.length != b.length) return false;
+  return a.containsAll(b);
 }
 
 class RollState {
@@ -57,6 +71,10 @@ class RollNotifier extends AsyncNotifier<RollState> {
         return false;
       }
       if (localFilter.status != null && roll.status != localFilter.status) {
+        return false;
+      }
+      if (localFilter.statuses != null &&
+          !localFilter.statuses!.contains(roll.status)) {
         return false;
       }
       if (localFilter.isActive != null) {
