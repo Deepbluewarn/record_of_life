@@ -13,7 +13,6 @@ import 'package:record_of_life/features/roll/presentation/providers/forms/new_sh
 import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/dialogs/lens_selection_dialog.dart';
-import 'package:record_of_life/shared/widgets/grid_selector.dart';
 import 'package:record_of_life/shared/widgets/selection_card.dart';
 import 'package:record_of_life/shared/widgets/wheel_selector.dart';
 
@@ -93,13 +92,11 @@ class ShotForm extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.xl),
 
-        GridSelector<ExposureComp>(
+        WheelSelector<ExposureComp>(
           title: '노출 보정 (E/V)',
           items: ExposureComp.values,
           selectedItem: form.exposureComp,
           labelBuilder: (e) => e.label,
-          columns: 4,
-          cellHeight: 52,
           onSelected: (e) =>
               ref.read(newShotFormProvider(shot).notifier).setExposureComp(e),
         ),
@@ -114,6 +111,7 @@ class ShotForm extends ConsumerWidget {
               ref.read(newShotFormProvider(shot).notifier).setIso(v),
         ),
         const SizedBox(height: AppSpacing.xl),
+
         _MiniNumberField(
           label: '초점거리 (mm)',
           initial: form.focalLength?.toString(),
