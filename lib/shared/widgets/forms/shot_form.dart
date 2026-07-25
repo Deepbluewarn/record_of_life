@@ -11,6 +11,7 @@ import 'package:record_of_life/domain/enums/shutter_speed.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
+import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/dialogs/lens_selection_dialog.dart';
 import 'package:record_of_life/shared/widgets/grid_selector.dart';
 import 'package:record_of_life/shared/widgets/selection_card.dart';
@@ -21,67 +22,27 @@ class ShotForm extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final shotFormProvider = ref.watch(newShotFormProvider(shot));
+    final form = ref.watch(newShotFormProvider(shot));
     final lensState = ref.watch(lensProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 날짜 선택
-        const Text(
-          '촬영 날짜',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        _Label('촬영 날짜'),
+        _DateField(
+          date: form.date,
+          onPick: (d) => ref.read(newShotFormProvider(shot).notifier).setDate(d),
         ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: shotFormProvider.date ?? DateTime.now(),
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2100),
-            );
-            if (picked != null) {
-              ref.read(newShotFormProvider(shot).notifier).setDate(picked);
-            }
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFE5E5E5)),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.calendar_today_outlined,
-                  size: 18,
-                  color: Color(0xFF6E6E6E),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  shotFormProvider.date != null
-                      ? '${shotFormProvider.date!.year}. ${shotFormProvider.date!.month.toString().padLeft(2, '0')}. ${shotFormProvider.date!.day.toString().padLeft(2, '0')}'
-                      : '날짜 선택',
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        // 렌즈 선택
+        const SizedBox(height: AppSpacing.xl),
+
+        _Label('렌즈'),
         SelectionCard(
           label: '렌즈',
           value: lensState.when(
             data: (data) {
-              if (shotFormProvider.lensId == null || data.lenses.isEmpty) {
-                return null;
-              }
+              if (form.lensId == null || data.lenses.isEmpty) return null;
               final lens = data.lenses.firstWhere(
-                (l) => l.id == shotFormProvider.lensId,
+                (l) => l.id == form.lensId,
                 orElse: () => data.lenses.first,
               );
               return lens.name;
@@ -92,7 +53,7 @@ class ShotForm extends ConsumerWidget {
           onTap: () {
             showDialog(
               context: context,
-              builder: (context) => LensSelectionDialog(
+              builder: (_) => LensSelectionDialog(
                 onSelected: (lens) {
                   ref
                       .read(newShotFormProvider(shot).notifier)
@@ -103,27 +64,24 @@ class ShotForm extends ConsumerWidget {
             );
           },
         ),
-        SizedBox(height: 24),
-        SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
 
-        // 조리개
         GridSelector<Aperture>(
           title: '조리개 (f/)',
           items: Aperture.values,
-          selectedItem: shotFormProvider.aperture,
+          selectedItem: form.aperture,
           labelBuilder: (a) => 'f/${a.value}',
           columns: 4,
           cellHeight: 56,
           onSelected: (a) =>
               ref.read(newShotFormProvider(shot).notifier).setAperture(a),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
 
-        // 셔터 스피드 — 60+개라 스크롤 허용
         GridSelector<ShutterSpeed>(
           title: '셔터 스피드',
           items: ShutterSpeed.values,
-          selectedItem: shotFormProvider.shutterSpeed,
+          selectedItem: form.shutterSpeed,
           labelBuilder: (s) => s.label,
           columns: 4,
           cellHeight: 52,
@@ -131,258 +89,301 @@ class ShotForm extends ConsumerWidget {
           onSelected: (s) =>
               ref.read(newShotFormProvider(shot).notifier).setShutterSpeed(s),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
 
-        // 노출 보정
         GridSelector<ExposureComp>(
           title: '노출 보정 (E/V)',
           items: ExposureComp.values,
-          selectedItem: shotFormProvider.exposureComp,
+          selectedItem: form.exposureComp,
           labelBuilder: (e) => e.label,
           columns: 4,
           cellHeight: 52,
           onSelected: (e) =>
               ref.read(newShotFormProvider(shot).notifier).setExposureComp(e),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
 
-        // ISO / 초점거리 (선택 — 미지정 시 필름/렌즈 값 상속)
         Row(
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'ISO (push/pull)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    initialValue: shotFormProvider.iso?.toString(),
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: '필름 ISO 상속',
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    onChanged: (v) => ref
-                        .read(newShotFormProvider(shot).notifier)
-                        .setIso(int.tryParse(v)),
-                  ),
-                ],
+              child: _MiniNumberField(
+                label: 'ISO (push/pull)',
+                initial: form.iso?.toString(),
+                hint: '필름 ISO 상속',
+                onChanged: (v) => ref
+                    .read(newShotFormProvider(shot).notifier)
+                    .setIso(int.tryParse(v)),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '초점거리 (mm)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    initialValue: shotFormProvider.focalLength?.toString(),
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: '렌즈 값 상속',
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    onChanged: (v) => ref
-                        .read(newShotFormProvider(shot).notifier)
-                        .setFocalLength(int.tryParse(v)),
-                  ),
-                ],
+              child: _MiniNumberField(
+                label: '초점거리 (mm)',
+                initial: form.focalLength?.toString(),
+                hint: '렌즈 값 상속',
+                onChanged: (v) => ref
+                    .read(newShotFormProvider(shot).notifier)
+                    .setFocalLength(int.tryParse(v)),
               ),
             ),
           ],
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
 
-        // 평점
-        Text('평점', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 24),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          clipBehavior: Clip.hardEdge,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (index) {
-              final starRating = index + 1;
-              final isSelected =
-                  shotFormProvider.rating != null &&
-                  starRating <= shotFormProvider.rating!;
-              return GestureDetector(
-                onTap: () {
-                  ref
-                      .read(newShotFormProvider(shot).notifier)
-                      .setRating(starRating);
-                  HapticFeedback.selectionClick();
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  child: Icon(
-                    isSelected ? Icons.star : Icons.star_border,
-                    color: isSelected ? Colors.amber : Colors.grey[400],
-                    size: 36,
-                  ),
-                ),
-              );
-            }),
-          ),
+        _Label('평점'),
+        _RatingRow(
+          rating: form.rating,
+          onSelect: (r) =>
+              ref.read(newShotFormProvider(shot).notifier).setRating(r),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
 
-        // 사진
-        Text('사진', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
-        Row(
-          children: [
-            // 썸네일 표시
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: shotFormProvider.imagePath != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(shotFormProvider.imagePath!),
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : Icon(Icons.image, size: 30, color: Colors.grey[400]),
-            ),
-            SizedBox(width: 12),
-            // 사진 추가 버튼
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  final picker = ImagePicker();
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('사진 선택'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            leading: Icon(Icons.photo_library),
-                            title: Text('갤러리에서 선택'),
-                            onTap: () async {
-                              Navigator.pop(context);
-                              final XFile? image = await picker.pickImage(
-                                source: ImageSource.gallery,
-                              );
-                              if (image != null) {
-                                // 앱 전용 디렉터리에 저장
-                                final appDir =
-                                    await getApplicationDocumentsDirectory();
-                                final fileName =
-                                    '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-                                final savedPath =
-                                    '${appDir.path}/images/$fileName';
-                                final savedFile = File(savedPath);
-                                await savedFile.parent.create(recursive: true);
-                                await image.saveTo(savedPath);
-                                ref
-                                    .read(newShotFormProvider(shot).notifier)
-                                    .setImagePath(savedPath);
-                              }
-                            },
-                          ),
-                          ListTile(
-                            leading: Icon(Icons.camera_alt),
-                            title: Text('카메라로 촬영'),
-                            onTap: () async {
-                              Navigator.pop(context);
-                              final XFile? image = await picker.pickImage(
-                                source: ImageSource.camera,
-                              );
-                              if (image != null) {
-                                // 앱 전용 디렉터리에 저장
-                                final appDir =
-                                    await getApplicationDocumentsDirectory();
-                                final fileName =
-                                    '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-                                final savedPath =
-                                    '${appDir.path}/images/$fileName';
-                                final savedFile = File(savedPath);
-                                await savedFile.parent.create(recursive: true);
-                                await image.saveTo(savedPath);
-                                ref
-                                    .read(newShotFormProvider(shot).notifier)
-                                    .setImagePath(savedPath);
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-                icon: Icon(Icons.add_photo_alternate),
-                label: Text('사진 추가'),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  side: BorderSide(color: Colors.grey[300]!),
-                ),
-              ),
-            ),
-          ],
+        _Label('참고 사진 (선택)'),
+        _PhotoPicker(
+          imagePath: form.imagePath,
+          onPicked: (p) =>
+              ref.read(newShotFormProvider(shot).notifier).setImagePath(p),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
 
-        // 메모
-        Text('메모', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
+        _Label('메모'),
         TextField(
-          onChanged: (value) {
-            ref.read(newShotFormProvider(shot).notifier).setNote(value);
-          },
-          decoration: InputDecoration(
-            hintText: '사진에 대한 메모를 남겨주세요',
-            hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
-            filled: true,
-            fillColor: Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: EdgeInsets.all(16),
-          ),
+          onChanged: (v) =>
+              ref.read(newShotFormProvider(shot).notifier).setNote(v),
+          decoration: const InputDecoration(hintText: '샷에 대한 메모'),
           maxLines: 3,
-          style: TextStyle(fontSize: 16),
         ),
       ],
     );
+  }
+}
+
+class _Label extends StatelessWidget {
+  final String text;
+  const _Label(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Text(text, style: Theme.of(context).textTheme.labelLarge),
+    );
+  }
+}
+
+class _DateField extends StatelessWidget {
+  final DateTime? date;
+  final ValueChanged<DateTime> onPick;
+  const _DateField({required this.date, required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: date ?? DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) onPick(picked);
+      },
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 14,
+        ),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 18,
+              color: AppColors.inkMuted,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              date != null
+                  ? '${date!.year}. ${date!.month.toString().padLeft(2, '0')}. '
+                      '${date!.day.toString().padLeft(2, '0')}'
+                  : '날짜 선택',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniNumberField extends StatelessWidget {
+  final String label;
+  final String? initial;
+  final String? hint;
+  final ValueChanged<String> onChanged;
+  const _MiniNumberField({
+    required this.label,
+    required this.initial,
+    required this.hint,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label(label),
+        TextFormField(
+          initialValue: initial,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(hintText: hint),
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _RatingRow extends StatelessWidget {
+  final int? rating;
+  final ValueChanged<int> onSelect;
+  const _RatingRow({required this.rating, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(5, (i) {
+          final star = i + 1;
+          final selected = rating != null && star <= rating!;
+          return GestureDetector(
+            onTap: () {
+              onSelect(star);
+              HapticFeedback.selectionClick();
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
+              child: Icon(
+                selected ? Icons.star : Icons.star_border,
+                color: selected ? AppColors.ink : AppColors.border,
+                size: 32,
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _PhotoPicker extends StatelessWidget {
+  final String? imagePath;
+  final ValueChanged<String> onPicked;
+  const _PhotoPicker({required this.imagePath, required this.onPicked});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: imagePath != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: Image.file(File(imagePath!), fit: BoxFit.cover),
+                )
+              : const Icon(
+                  Icons.image_outlined,
+                  size: 26,
+                  color: AppColors.inkMuted,
+                ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _showSourceDialog(context),
+            icon: const Icon(Icons.add_photo_alternate_outlined),
+            label: const Text('사진 추가'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showSourceDialog(BuildContext context) async {
+    final picker = ImagePicker();
+    await showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('사진 선택'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('갤러리에서 선택'),
+              onTap: () async {
+                Navigator.pop(dialogCtx);
+                final image = await picker.pickImage(
+                  source: ImageSource.gallery,
+                );
+                if (image != null) {
+                  final saved = await _saveImage(image);
+                  onPicked(saved);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('카메라로 촬영'),
+              onTap: () async {
+                Navigator.pop(dialogCtx);
+                final image = await picker.pickImage(
+                  source: ImageSource.camera,
+                );
+                if (image != null) {
+                  final saved = await _saveImage(image);
+                  onPicked(saved);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<String> _saveImage(XFile image) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final fileName =
+        '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+    final path = '${dir.path}/images/$fileName';
+    final file = File(path);
+    await file.parent.create(recursive: true);
+    await image.saveTo(path);
+    return path;
   }
 }
