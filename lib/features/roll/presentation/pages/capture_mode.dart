@@ -245,7 +245,7 @@ class _ConfirmBar extends ConsumerWidget {
         width: double.infinity,
         height: 64,
         child: ElevatedButton(
-          onPressed: canSave ? () => _save(context, ref) : null,
+          onPressed: canSave ? () => _onConfirm(context, ref) : null,
           child: Text(
             '확인 · #$nextFrame 저장',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
@@ -253,6 +253,34 @@ class _ConfirmBar extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _onConfirm(BuildContext context, WidgetRef ref) async {
+    // 총 매수 초과 시 사용자 확인.
+    if (nextFrame > roll.totalShots) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('총 매수 초과'),
+          content: Text(
+            '이 롤의 총 매수는 ${roll.totalShots}입니다. #$nextFrame을 계속 기록할까요?\n'
+            '(필름 실물이 여유분을 허용하는 경우에 유효)',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('계속'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !context.mounted) return;
+    }
+    await _save(context, ref);
   }
 
   Future<void> _save(BuildContext context, WidgetRef ref) async {

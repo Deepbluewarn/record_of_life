@@ -77,9 +77,8 @@ class RollRepositoryImpl extends RollRepository {
       if (snap == null) return;
       final current = Roll.fromMap(Map<String, Object?>.from(snap.value));
       final next = current.shotsDone + 1;
-      if (next > current.totalShots) return;
-      // planning → 첫 샷 저장 시 촬영중으로 승격.
-      // 최대 매수 도달 → 자동 완료.
+      // 필름 실물처럼 max를 초과할 수 있음(37/38번째 컷 등).
+      // 초과 시 auto-complete는 이미 지났으므로 상태 변경 없음.
       RollStatus? nextStatus;
       DateTime? nextEndedAt;
       if (next == current.totalShots &&
