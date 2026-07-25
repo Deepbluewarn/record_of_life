@@ -1,26 +1,21 @@
 # TODO
 
-## 이번 세션 완료
-- [x] A. 앱 아이콘 · 스플래시 파이프라인 (icon PNG는 사용자 준비)
-- [x] B. 홈 empty state
-- [x] D. 총 매수 초과 촬영 옵션
-- [x] F. 데드 코드 정리
-- [x] G. ExiftoolExporter · 롤 라이프사이클 unit test
-- [x] I. 위치 권한 거부 안내
-- [x] 버그: 홈에서 방금 만든 롤이 안 보이는 문제 (RollFilter.inProgress → working)
-- [x] LRU 정렬 (카메라·필름·렌즈 selection dialog 상단에 최근 사용)
-- [x] E 부분: CustomAppBar 미니멀 톤 + shot_form 날짜 필드
-- [x] K 부분: 프리뷰 탭 = 즉시 촬영
+## 최근 세션 완료
+- [x] 홈 필터 버그 (RollFilter.working — planning+inProgress)
+- [x] LRU 정렬 (카메라·필름·렌즈 dialog 상단 최근 사용순)
+- [x] 캡처 실시간 프리뷰 제거 (필름 카메라 사용자에게 방해)
+- [x] E UI 톤 통일: ShotForm 컴포넌트 분해, 3개 bottom sheet를 BottomSheetShell로
+      공용화, 인라인 스타일 제거
+- [x] K 부분: 홈 롤 카드에서 '입력 모드 시작' 바로가기 아이콘
 
 ## 남음
 - [ ] C. 스토어 준비물 (개인정보처리방침, 서명, 스크린샷)
-- [ ] E 잔여. shot_form의 나머지 필드(TextField 인라인 스타일), 3개
-      bottom sheet(add_camera/film/lens), 다이얼로그 배경·타이틀 스타일.
+- [ ] E 잔여. dialog 배경/타이틀 계열, shot_card, section_header 톤 재점검.
 - [ ] H. 스캔 파일명 규칙 사용자 설정 (PRD 4.5)
-- [ ] K 잔여. 사용자가 언급한 '전체적인 플로우 재정비':
-      홈 → 롤 상세 → 입력 모드의 3단 탭 흐름 검토, 진행 중 롤 카드에서
-      바로 입력 모드로 진입하는 shortcut, 온보딩 종료 후 첫 롤 CTA 배치 등.
-      큰 스코프 — 별도 세션에서 재논의.
+- [ ] K 잔여. 사용자가 언급한 '전체 플로우 재정비' 추가 아이디어:
+      - 캡처 진입 후 저장 완료 시 롤 상세로 되돌아가는 옵션
+      - 온보딩 종료 후 첫 롤 CTA를 온보딩 자체에 통합할지
+      - 롤 카드 롱프레스 = 즉시 캡처 (다중 선택 있는 all_rolls_page와 충돌 주의)
 - [ ] icon PNG: assets/icon/icon.png (1024×1024) 준비 후
       `dart run flutter_launcher_icons` 실행.
 
