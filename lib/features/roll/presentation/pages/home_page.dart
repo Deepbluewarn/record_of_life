@@ -13,7 +13,7 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rollState = ref.watch(rollProvider(RollFilter.active));
+    final rollState = ref.watch(rollProvider(RollFilter.inProgress));
 
     return Scaffold(
       appBar: CustomAppBar(title: 'ROL', subtitle: '롤 목록'),

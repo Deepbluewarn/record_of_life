@@ -78,9 +78,16 @@ class RollRepositoryImpl extends RollRepository {
       final current = Roll.fromMap(Map<String, Object?>.from(snap.value));
       final next = current.shotsDone + 1;
       if (next > current.totalShots) return;
+      // 최대 매수 도달 시 자동 완료 처리.
+      final autoComplete = next == current.totalShots &&
+          current.status == RollStatus.inProgress;
       await AppStore.rolls.record(rollId).put(
         txn,
-        current.copyWith(shotsDone: next).toMap(),
+        current.copyWith(
+          shotsDone: next,
+          status: autoComplete ? RollStatus.completed : null,
+          endedAt: autoComplete ? DateTime.now() : null,
+        ).toMap(),
       );
     });
   }

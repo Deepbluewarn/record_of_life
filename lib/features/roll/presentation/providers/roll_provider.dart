@@ -9,15 +9,17 @@ import 'package:record_of_life/features/roll/presentation/providers/shot_provide
 
 class RollFilter {
   final String? rollId;
-  final RollState? state;
-  final bool? isActive;
+  final RollStatus? status;
+  final bool? isActive; // true = archived 제외
 
-  const RollFilter({this.rollId, this.state, this.isActive});
+  const RollFilter({this.rollId, this.status, this.isActive});
 
-  // 기본 필터들
   static const all = RollFilter();
   static const active = RollFilter(isActive: true);
   static const inactive = RollFilter(isActive: false);
+  static const inProgress = RollFilter(status: RollStatus.inProgress);
+  static const completed = RollFilter(status: RollStatus.completed);
+  static const archived = RollFilter(status: RollStatus.archived);
 
   @override
   bool operator ==(Object other) =>
@@ -25,11 +27,11 @@ class RollFilter {
       other is RollFilter &&
           runtimeType == other.runtimeType &&
           rollId == other.rollId &&
-          state == other.state &&
+          status == other.status &&
           isActive == other.isActive;
 
   @override
-  int get hashCode => Object.hash(rollId, state, isActive);
+  int get hashCode => Object.hash(rollId, status, isActive);
 }
 
 class RollState {
@@ -52,19 +54,18 @@ class RollNotifier extends AsyncNotifier<RollState> {
     if (localFilter == null) return RollState(rolls: allRolls);
 
     final filteredRolls = allRolls.where((roll) {
-      // rollId 필터
       if (localFilter.rollId != null && roll.id != localFilter.rollId) {
         return false;
       }
-
-      // isActive 필터 (완료되지 않은 롤)
+      if (localFilter.status != null && roll.status != localFilter.status) {
+        return false;
+      }
       if (localFilter.isActive != null) {
         final rollIsActive = roll.status != RollStatus.archived;
         if (rollIsActive != localFilter.isActive) {
           return false;
         }
       }
-
       return true;
     }).toList();
 

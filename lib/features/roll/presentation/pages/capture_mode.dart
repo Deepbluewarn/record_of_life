@@ -206,6 +206,7 @@ class _ConfirmBar extends ConsumerWidget {
     HapticFeedback.mediumImpact();
 
     if (!context.mounted) return;
+    final justCompleted = nextFrame == roll.totalShots;
     final handedness = ref.read(settingsProvider).value?.handedness;
     final width = MediaQuery.of(context).size.width;
     final EdgeInsets margin = handedness == Handedness.left
@@ -215,8 +216,12 @@ class _ConfirmBar extends ConsumerWidget {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('#$nextFrame 저장됨'),
-          duration: const Duration(milliseconds: 900),
+          content: Text(
+            justCompleted
+                ? '#$nextFrame 저장 · 롤 촬영 완료 🎞'
+                : '#$nextFrame 저장됨',
+          ),
+          duration: Duration(milliseconds: justCompleted ? 2200 : 900),
           behavior: SnackBarBehavior.floating,
           margin: margin,
         ),

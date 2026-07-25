@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/domain/enums/roll_status.dart';
 import 'package:record_of_life/domain/models/roll.dart';
-import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
 import 'package:record_of_life/features/export/export_service.dart';
+import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
 import 'package:record_of_life/features/roll/presentation/pages/capture_mode.dart';
 import 'package:record_of_life/features/roll/presentation/pages/picture_detail.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
@@ -49,6 +50,40 @@ class RollDetailsPage extends ConsumerWidget {
                 }
               }
             },
+          ),
+          PopupMenuButton<RollStatus>(
+            tooltip: '상태 변경',
+            icon: const Icon(Icons.flag_outlined),
+            onSelected: (status) async {
+              await ref
+                  .read(rollProvider(null).notifier)
+                  .updateRoll(currentRoll.copyWith(
+                    status: status,
+                    endedAt: status == RollStatus.completed
+                        ? (currentRoll.endedAt ?? DateTime.now())
+                        : currentRoll.endedAt,
+                  ));
+            },
+            itemBuilder: (context) => [
+              for (final s in RollStatus.values)
+                PopupMenuItem(
+                  value: s,
+                  enabled: s != currentRoll.status,
+                  child: Row(
+                    children: [
+                      Icon(
+                        s == currentRoll.status
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                        size: 18,
+                        color: s.displayColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(s.displayName(context)),
+                    ],
+                  ),
+                ),
+            ],
           ),
           IconButton(
             icon: Icon(Icons.edit),
@@ -154,33 +189,33 @@ class RollDetailsPage extends ConsumerWidget {
               width: double.infinity,
               height: 56,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  final formNotifier = ref.read(
-                    newShotFormProvider(null).notifier,
-                  );
-                  formNotifier.reset();
-                  if (currentRoll.defaultLensId != null) {
-                    formNotifier.setLensId(currentRoll.defaultLensId);
-                  }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CaptureModePage(roll: currentRoll),
-                    ),
-                  );
-                },
+                onPressed: currentRoll.status == RollStatus.archived
+                    ? null
+                    : () {
+                        final formNotifier = ref.read(
+                          newShotFormProvider(null).notifier,
+                        );
+                        formNotifier.reset();
+                        if (currentRoll.defaultLensId != null) {
+                          formNotifier.setLensId(currentRoll.defaultLensId);
+                        }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                CaptureModePage(roll: currentRoll),
+                          ),
+                        );
+                      },
                 icon: const Icon(Icons.camera_alt),
-                label: const Text(
-                  '입력 모드 시작',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                label: Text(
+                  currentRoll.status == RollStatus.completed
+                      ? '입력 모드 (촬영 완료됨)'
+                      : '입력 모드 시작',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                  elevation: 0,
                 ),
               ),
             ),
