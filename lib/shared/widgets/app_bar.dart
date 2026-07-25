@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:record_of_life/features/settings/pages/settings_page.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -46,7 +47,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         ...actions,
-        IconButton(onPressed: () {}, icon: Icon(Icons.settings)),
+        IconButton(
+          icon: const Icon(Icons.settings),
+          tooltip: '설정',
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsPage()),
+          ),
+        ),
       ],
     );
   }
