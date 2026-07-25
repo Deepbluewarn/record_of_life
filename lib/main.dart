@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/data/seeds.dart';
+import 'package:record_of_life/data/settings_store.dart';
 import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/features/roll/presentation/pages/home_page.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
@@ -11,6 +13,7 @@ import 'package:record_of_life/shared/theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final store = await AppStore.open();
+  await Seeds.ensureSeeded(store, SettingsStore(store));
   runApp(
     ProviderScope(
       overrides: [appStoreProvider.overrideWithValue(store)],
