@@ -5,6 +5,7 @@ import 'package:record_of_life/domain/enums/shutter_speed.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 
 class NewShotFormState {
+  final int idx;
   final DateTime? date;
   final String? lensId;
   final Aperture? aperture;
@@ -17,6 +18,7 @@ class NewShotFormState {
   final String? imagePath;
 
   NewShotFormState({
+    this.idx = 1,
     DateTime? date,
     this.lensId,
     this.aperture,
@@ -30,6 +32,7 @@ class NewShotFormState {
   }) : date = date ?? DateTime.now();
 
   NewShotFormState copyWith({
+    int? idx,
     DateTime? date,
     String? lensId,
     Aperture? aperture,
@@ -42,6 +45,7 @@ class NewShotFormState {
     String? imagePath,
   }) {
     return NewShotFormState(
+      idx: idx ?? this.idx,
       date: date ?? this.date,
       lensId: lensId ?? this.lensId,
       aperture: aperture ?? this.aperture,
@@ -59,6 +63,7 @@ class NewShotFormState {
     return Shot(
       id: shotId,
       rollId: rollId,
+      idx: idx,
       date: date,
       lensId: lensId,
       aperture: aperture,
@@ -89,6 +94,7 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
   NewShotFormState build() {
     if (_shot != null) {
       return NewShotFormState(
+        idx: _shot.idx,
         date: _shot.date,
         lensId: _shot.lensId,
         aperture: _shot.aperture,
