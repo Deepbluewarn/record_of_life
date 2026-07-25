@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,11 +32,29 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
   Future<void>? _initFuture;
   String? _initError;
   bool _permanentlyDenied = false;
+  LocationAccess _locationAccess = LocationAccess.granted;
 
   @override
   void initState() {
     super.initState();
     _initFuture = _initCamera();
+    _checkLocation();
+  }
+
+  Future<void> _checkLocation() async {
+    final a = await checkLocationAccess();
+    if (mounted) setState(() => _locationAccess = a);
+  }
+
+  Future<void> _requestLocation() async {
+    final a = await requestLocationAccess();
+    if (!mounted) return;
+    setState(() => _locationAccess = a);
+    if (a == LocationAccess.permanentlyDenied) {
+      await Geolocator.openAppSettings();
+    } else if (a == LocationAccess.serviceDisabled) {
+      await Geolocator.openLocationSettings();
+    }
   }
 
   Future<void> _initCamera() async {
@@ -124,6 +143,10 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
               initError: _initError,
               permanentlyDenied: _permanentlyDenied,
               onRetry: _retry,
+            ),
+            _LocationHint(
+              access: _locationAccess,
+              onTap: _requestLocation,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -217,6 +240,50 @@ class _PreviewArea extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _LocationHint extends StatelessWidget {
+  final LocationAccess access;
+  final VoidCallback onTap;
+  const _LocationHint({required this.access, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    if (access == LocationAccess.granted) return const SizedBox.shrink();
+    final msg = switch (access) {
+      LocationAccess.serviceDisabled => '위치 서비스 꺼짐 · 탭하여 설정 열기',
+      LocationAccess.permanentlyDenied => '위치 권한 영구 거부 · 탭하여 설정 열기',
+      LocationAccess.denied => 'GPS 미기록 · 탭하여 위치 권한 허용',
+      LocationAccess.granted => '',
+    };
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        color: AppColors.surface,
+        child: Row(
+          children: [
+            const Icon(
+              Icons.location_off,
+              size: 14,
+              color: AppColors.inkMuted,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.inkMuted,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ConfirmBar extends ConsumerWidget {
