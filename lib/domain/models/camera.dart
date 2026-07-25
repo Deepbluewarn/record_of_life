@@ -3,10 +3,11 @@ import 'package:uuid/uuid.dart';
 class Camera {
   final String id;
   final String title;
-  final String? brand; // Canon
-  final String? format; // 35mm, 120, Half
-  final String? mount; // FD, M42, etc.
+  final String? brand;
+  final String? format;
+  final String? mount;
   final String? notes;
+  final DateTime? lastUsedAt;
 
   Camera({
     String? id,
@@ -15,6 +16,7 @@ class Camera {
     this.format,
     this.mount,
     this.notes,
+    this.lastUsedAt,
   }) : id = id ?? const Uuid().v4();
 
   Map<String, Object?> toMap() => {
@@ -24,6 +26,7 @@ class Camera {
     'format': format,
     'mount': mount,
     'notes': notes,
+    'lastUsedAt': lastUsedAt?.toIso8601String(),
   };
 
   factory Camera.fromMap(Map<String, Object?> m) => Camera(
@@ -33,5 +36,8 @@ class Camera {
     format: m['format'] as String?,
     mount: m['mount'] as String?,
     notes: m['notes'] as String?,
+    lastUsedAt: m['lastUsedAt'] == null
+        ? null
+        : DateTime.parse(m['lastUsedAt'] as String),
   );
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/film.dart';
 import 'package:record_of_life/features/roll/presentation/providers/film_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/bottom_sheets/add_film_bottom_sheet.dart';
 
@@ -85,7 +86,13 @@ class FilmSelectionDialog extends ConsumerWidget {
                           size: 18,
                         )
                       : null,
-                  onTap: () => onSelected(film),
+                  onTap: () async {
+                    await ref
+                        .read(filmRepositoryProvider)
+                        .touchFilm(film.id);
+                    ref.invalidate(filmProvider);
+                    onSelected(film);
+                  },
                 );
               },
             );

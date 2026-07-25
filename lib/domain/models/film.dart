@@ -7,6 +7,7 @@ class Film {
   final int? iso;
   final String? format;
   final String? note;
+  final DateTime? lastUsedAt;
 
   Film({
     String? id,
@@ -15,6 +16,7 @@ class Film {
     this.brand,
     this.iso,
     this.note,
+    this.lastUsedAt,
   }) : id = id ?? const Uuid().v4();
 
   Map<String, Object?> toMap() => {
@@ -24,6 +26,7 @@ class Film {
     'iso': iso,
     'format': format,
     'note': note,
+    'lastUsedAt': lastUsedAt?.toIso8601String(),
   };
 
   factory Film.fromMap(Map<String, Object?> m) => Film(
@@ -33,5 +36,8 @@ class Film {
     iso: m['iso'] as int?,
     format: m['format'] as String?,
     note: m['note'] as String?,
+    lastUsedAt: m['lastUsedAt'] == null
+        ? null
+        : DateTime.parse(m['lastUsedAt'] as String),
   );
 }

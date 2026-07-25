@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/camera.dart';
 import 'package:record_of_life/features/roll/presentation/providers/camera_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/bottom_sheets/add_camera_bottom_sheet.dart';
 
@@ -81,7 +82,13 @@ class CameraSelectionDialog extends ConsumerWidget {
                           size: 18,
                         )
                       : null,
-                  onTap: () => onSelected(camera),
+                  onTap: () async {
+                    await ref
+                        .read(cameraRepositoryProvider)
+                        .touchCamera(camera.id);
+                    ref.invalidate(cameraProvider);
+                    onSelected(camera);
+                  },
                 );
               },
             );

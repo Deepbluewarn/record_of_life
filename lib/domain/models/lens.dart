@@ -10,6 +10,7 @@ class Lens {
   final String? coating;
   final String? type;
   final String? notes;
+  final DateTime? lastUsedAt;
 
   Lens({
     String? id,
@@ -21,6 +22,7 @@ class Lens {
     this.coating,
     this.notes,
     this.type,
+    this.lastUsedAt,
   }) : id = id ?? const Uuid().v4();
 
   Map<String, Object?> toMap() => {
@@ -33,6 +35,7 @@ class Lens {
     'coating': coating,
     'type': type,
     'notes': notes,
+    'lastUsedAt': lastUsedAt?.toIso8601String(),
   };
 
   factory Lens.fromMap(Map<String, Object?> m) => Lens(
@@ -45,5 +48,8 @@ class Lens {
     coating: m['coating'] as String?,
     type: m['type'] as String?,
     notes: m['notes'] as String?,
+    lastUsedAt: m['lastUsedAt'] == null
+        ? null
+        : DateTime.parse(m['lastUsedAt'] as String),
   );
 }

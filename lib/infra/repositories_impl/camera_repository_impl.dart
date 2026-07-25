@@ -31,13 +31,32 @@ class CameraRepositoryImpl extends CameraRepository {
   @override
   Future<List<Camera>> getAllCameras() async {
     final snaps = await AppStore.cameras.find(_store.db);
-    return snaps
+    final list = snaps
         .map((s) => Camera.fromMap(Map<String, Object?>.from(s.value)))
         .toList();
+    list.sort(_byRecency);
+    return list;
   }
 
   @override
   Future<void> updateCamera(Camera camera) async {
     await AppStore.cameras.record(camera.id).put(_store.db, camera.toMap());
   }
+
+  @override
+  Future<void> touchCamera(String id) async {
+    await AppStore.cameras.record(id).update(_store.db, {
+      'lastUsedAt': DateTime.now().toIso8601String(),
+    });
+  }
+}
+
+// lastUsedAt desc(최근이 위), null은 뒤로, tie는 title 오름차순.
+int _byRecency(Camera a, Camera b) {
+  final aT = a.lastUsedAt;
+  final bT = b.lastUsedAt;
+  if (aT == null && bT == null) return a.title.compareTo(b.title);
+  if (aT == null) return 1;
+  if (bT == null) return -1;
+  return bT.compareTo(aT);
 }

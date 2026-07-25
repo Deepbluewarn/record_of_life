@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/lens.dart';
 import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/bottom_sheets/add_lens_bottom_sheet.dart';
 
@@ -59,7 +60,11 @@ class LensSelectionDialog extends ConsumerWidget {
                     if (lens.mount != null) lens.mount,
                   ].join(' · '),
                 ),
-                onTap: () {
+                onTap: () async {
+                  await ref
+                      .read(lensRepositoryProvider)
+                      .touchLens(lens.id);
+                  ref.invalidate(lensProvider);
                   onSelected(lens);
                 },
               );

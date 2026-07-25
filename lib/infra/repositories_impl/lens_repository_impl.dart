@@ -9,9 +9,11 @@ class LensRepositoryImpl extends LensRepository {
 
   Future<List<Lens>> getAllLenses() async {
     final snaps = await AppStore.lenses.find(_store.db);
-    return snaps
+    final list = snaps
         .map((s) => Lens.fromMap(Map<String, Object?>.from(s.value)))
         .toList();
+    list.sort(_byRecency);
+    return list;
   }
 
   @override
@@ -38,4 +40,20 @@ class LensRepositoryImpl extends LensRepository {
   Future<void> updateLens(Lens lens) async {
     await AppStore.lenses.record(lens.id).put(_store.db, lens.toMap());
   }
+
+  @override
+  Future<void> touchLens(String id) async {
+    await AppStore.lenses.record(id).update(_store.db, {
+      'lastUsedAt': DateTime.now().toIso8601String(),
+    });
+  }
+}
+
+int _byRecency(Lens a, Lens b) {
+  final aT = a.lastUsedAt;
+  final bT = b.lastUsedAt;
+  if (aT == null && bT == null) return a.name.compareTo(b.name);
+  if (aT == null) return 1;
+  if (bT == null) return -1;
+  return bT.compareTo(aT);
 }
