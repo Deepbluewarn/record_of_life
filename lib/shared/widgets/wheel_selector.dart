@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 
-// Halide/iPhone 다이얼 스타일: 가로 스크롤, 중앙 스냅, 스텝마다 햅틱.
-// ListView 기반 — fling 관성으로 여러 스텝 훑고 놓으면 근처 값에 스냅.
+// Flutter 표준 ListWheelScrollView 기반의 가로 다이얼.
+// 세로 wheel을 RotatedBox로 눕혀 가로로 사용. snap·onSelectedItemChanged가
+// 프레임워크 native라 커스텀 스크롤 물리·리페인트 최적화 불필요.
 class WheelSelector<T> extends StatefulWidget {
   final String title;
   final List<T> items;
   final T? selectedItem;
   final String Function(T) labelBuilder;
   final ValueChanged<T> onSelected;
-  // 긴 목록용 섹션 점프 칩. 라벨 → 대표 item.
+  // 라벨 → 대표 item. 지정 시 위쪽에 섹션 점프 칩 노출.
   final Map<String, T>? sections;
 
   const WheelSelector({
@@ -27,30 +28,12 @@ class WheelSelector<T> extends StatefulWidget {
   State<WheelSelector<T>> createState() => _WheelSelectorState<T>();
 }
 
-// 관성 감속 없이 손 뗄 때 즉시 정지. 이후 snap animateTo가 근처 값으로 붙임.
-class _NoInertiaPhysics extends ScrollPhysics {
-  const _NoInertiaPhysics({super.parent});
-
-  @override
-  _NoInertiaPhysics applyTo(ScrollPhysics? ancestor) =>
-      _NoInertiaPhysics(parent: buildParent(ancestor));
-
-  @override
-  Simulation? createBallisticSimulation(
-    ScrollMetrics position,
-    double velocity,
-  ) {
-    return null;
-  }
-}
-
 class _WheelSelectorState<T> extends State<WheelSelector<T>> {
   static const double _itemExtent = 72;
   static const double _height = 76;
 
-  late final ScrollController _controller;
+  late final FixedExtentScrollController _controller;
   int _lastIndex = 0;
-  bool _snapPending = false;
 
   int _initialIndex() {
     if (widget.selectedItem == null) return 0;
@@ -62,10 +45,7 @@ class _WheelSelectorState<T> extends State<WheelSelector<T>> {
   void initState() {
     super.initState();
     _lastIndex = _initialIndex();
-    _controller = ScrollController(
-      initialScrollOffset: _lastIndex * _itemExtent,
-    );
-    _controller.addListener(_onScroll);
+    _controller = FixedExtentScrollController(initialItem: _lastIndex);
   }
 
   @override
@@ -74,49 +54,24 @@ class _WheelSelectorState<T> extends State<WheelSelector<T>> {
     final now = _initialIndex();
     if (now != _lastIndex && _controller.hasClients) {
       _lastIndex = now;
-      _controller.jumpTo(now * _itemExtent);
+      _controller.jumpToItem(now);
     }
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_onScroll);
     _controller.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_controller.hasClients) return;
-    final idx = (_controller.offset / _itemExtent)
-        .round()
-        .clamp(0, widget.items.length - 1);
-    if (idx != _lastIndex) {
-      _lastIndex = idx;
-      HapticFeedback.selectionClick();
-      widget.onSelected(widget.items[idx]);
-    }
-  }
-
-  Future<void> _snapToNearest() async {
-    if (_snapPending || !_controller.hasClients) return;
-    _snapPending = true;
-    final idx = (_controller.offset / _itemExtent)
-        .round()
-        .clamp(0, widget.items.length - 1);
-    final target = idx * _itemExtent;
-    if ((target - _controller.offset).abs() > 0.5) {
-      await _controller.animateTo(
-        target,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-      );
-    }
-    _snapPending = false;
-  }
-
-  bool _handleNotif(ScrollNotification n) {
-    if (n is ScrollEndNotification) _snapToNearest();
-    return false;
+  void _jumpTo(T item) {
+    final idx = widget.items.indexOf(item);
+    if (idx < 0 || !_controller.hasClients) return;
+    _controller.animateToItem(
+      idx,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -126,108 +81,52 @@ class _WheelSelectorState<T> extends State<WheelSelector<T>> {
       children: [
         Text(widget.title, style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: AppSpacing.sm),
-        if (widget.sections != null) _SectionChips<T>(
-          sections: widget.sections!,
-          onJump: (item) {
-            final idx = widget.items.indexOf(item);
-            if (idx < 0 || !_controller.hasClients) return;
-            _controller.animateTo(
-              idx * _itemExtent,
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
-            );
-          },
-        ),
-        if (widget.sections != null) const SizedBox(height: AppSpacing.sm),
+        if (widget.sections != null) ...[
+          _SectionChips<T>(sections: widget.sections!, onJump: _jumpTo),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         SizedBox(
           height: _height,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final sidePad = (constraints.maxWidth - _itemExtent) / 2;
-              return NotificationListener<ScrollNotification>(
-                onNotification: _handleNotif,
-                child: Stack(
-                  children: [
-                    ListView.builder(
-                      controller: _controller,
-                      scrollDirection: Axis.horizontal,
-                      physics: const _NoInertiaPhysics(),
-                      padding: EdgeInsets.symmetric(horizontal: sidePad),
-                      itemExtent: _itemExtent,
-                      itemCount: widget.items.length,
-                      itemBuilder: (context, i) => _WheelItem(
-                        label: widget.labelBuilder(widget.items[i]),
-                        controller: _controller,
-                        index: i,
-                        itemExtent: _itemExtent,
-                        onTap: () {
-                          _controller.animateTo(
-                            i * _itemExtent,
-                            duration: const Duration(milliseconds: 180),
-                            curve: Curves.easeOut,
-                          );
-                        },
+          child: Stack(
+            children: [
+              RotatedBox(
+                quarterTurns: 3,
+                child: ListWheelScrollView.useDelegate(
+                  controller: _controller,
+                  itemExtent: _itemExtent,
+                  physics: const FixedExtentScrollPhysics(),
+                  perspective: 0.003,
+                  diameterRatio: 2.2,
+                  onSelectedItemChanged: (i) {
+                    if (i != _lastIndex) {
+                      _lastIndex = i;
+                      HapticFeedback.selectionClick();
+                      widget.onSelected(widget.items[i]);
+                    }
+                  },
+                  childDelegate: ListWheelChildBuilderDelegate(
+                    childCount: widget.items.length,
+                    builder: (context, i) => RotatedBox(
+                      quarterTurns: 1,
+                      child: Center(
+                        child: Text(
+                          widget.labelBuilder(widget.items[i]),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.ink,
+                          ),
+                        ),
                       ),
                     ),
-                    const _CenterMarker(),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _WheelItem extends StatelessWidget {
-  final String label;
-  final ScrollController controller;
-  final int index;
-  final double itemExtent;
-  final VoidCallback onTap;
-
-  const _WheelItem({
-    required this.label,
-    required this.controller,
-    required this.index,
-    required this.itemExtent,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) {
-            final offset = controller.hasClients ? controller.offset : 0.0;
-            final page = offset / itemExtent;
-            final distance = (page - index).abs().clamp(0.0, 1.5);
-            // save-layer 유발하는 Opacity 위젯 대신 텍스트 컬러 alpha로 처리.
-            final alpha = (1.0 - (distance * 0.55)).clamp(0.2, 1.0);
-            final scale = 1.0 - (distance * 0.25);
-            final selected = distance < 0.5;
-            return Center(
-              child: Transform.scale(
-                scale: scale,
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
-                    color: AppColors.ink.withValues(alpha: alpha),
                   ),
                 ),
               ),
-            );
-          },
+              const _CenterMarker(),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -251,10 +150,7 @@ class _SectionChips<T> extends StatelessWidget {
             onTap: () => onJump(entry.value),
             borderRadius: BorderRadius.circular(6),
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(6),
