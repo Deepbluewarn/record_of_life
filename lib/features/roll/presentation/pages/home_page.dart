@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
 import 'package:record_of_life/features/roll/presentation/pages/all_rolls_page.dart';
+import 'package:record_of_life/features/roll/presentation/pages/capture_mode.dart';
 import 'package:record_of_life/features/roll/presentation/pages/roll_details.dart';
+import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
+import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
 import 'package:record_of_life/shared/widgets/roll_card.dart';
 import 'package:record_of_life/shared/widgets/section_header.dart';
@@ -18,7 +22,7 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       appBar: CustomAppBar(title: 'ROL', subtitle: '롤 목록'),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: [
             SectionHeader(
@@ -27,12 +31,10 @@ class HomePage extends ConsumerWidget {
                 data: (data) => data.rolls.length,
                 orElse: () => 0,
               ),
-              onActionPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AllRollsPage()),
-                );
-              },
+              onActionPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AllRollsPage()),
+              ),
             ),
             Expanded(
               child: rollState.when(
@@ -41,60 +43,97 @@ class HomePage extends ConsumerWidget {
                     return _EmptyState(
                       onCreate: () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => AddRollPage(),
-                        ),
+                        MaterialPageRoute(builder: (_) => AddRollPage()),
                       ),
                     );
                   }
                   return ListView.separated(
-                    itemBuilder: (BuildContext context, int index) {
-                      return Hero(
-                        tag: rollData.rolls[index].id,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => RollDetailsPage(
-                                    roll: rollData.rolls[index],
-                                  ),
-                                ),
-                              );
-                            },
-                            child: RollCard(roll: rollData.rolls[index]),
+                    itemCount: rollData.rolls.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, i) {
+                      final roll = rollData.rolls[i];
+                      return _HomeRollTile(
+                        roll: roll,
+                        onOpen: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => RollDetailsPage(roll: roll),
                           ),
                         ),
+                        onQuickCapture: () => _startCapture(context, ref, roll),
                       );
                     },
-                    separatorBuilder: (BuildContext context, int index) =>
-                        const SizedBox(height: 8),
-                    itemCount: rollData.rolls.length,
                   );
                 },
-                loading: () {
-                  return Center(child: CircularProgressIndicator());
-                },
-                error: (error, stack) {
-                  return Center(child: Text('오류: $error'));
-                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('오류: $e')),
               ),
             ),
-
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AddRollPage()),
-                );
-              },
-              child: Text('새 롤 추가'),
+            TextButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => AddRollPage()),
+              ),
+              icon: const Icon(Icons.add),
+              label: const Text('새 롤 추가'),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _startCapture(BuildContext context, WidgetRef ref, Roll roll) {
+    final notifier = ref.read(newShotFormProvider(null).notifier);
+    notifier.reset();
+    if (roll.defaultLensId != null) {
+      notifier.setLensId(roll.defaultLensId);
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CaptureModePage(roll: roll)),
+    );
+  }
+}
+
+// 홈 전용 롤 카드 래퍼: 카드 탭 = 상세, 우측 '지금 촬영' 액션 = 캡처 진입.
+class _HomeRollTile extends StatelessWidget {
+  final Roll roll;
+  final VoidCallback onOpen;
+  final VoidCallback onQuickCapture;
+
+  const _HomeRollTile({
+    required this.roll,
+    required this.onOpen,
+    required this.onQuickCapture,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Hero(
+          tag: roll.id,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onOpen,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: RollCard(roll: roll),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 4,
+          top: 4,
+          child: IconButton(
+            tooltip: '입력 모드 시작',
+            icon: const Icon(Icons.camera_alt_outlined),
+            onPressed: onQuickCapture,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -112,7 +151,7 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.camera_roll_outlined, size: 56),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               '진행 중인 롤이 없습니다',
               style: Theme.of(context).textTheme.titleMedium,
@@ -123,7 +162,7 @@ class _EmptyState extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             ElevatedButton.icon(
               onPressed: onCreate,
               icon: const Icon(Icons.add),
