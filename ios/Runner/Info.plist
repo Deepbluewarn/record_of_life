@@ -4,6 +4,8 @@
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>샷 저장 시점의 위치를 EXIF에 기록하기 위해 사용됩니다.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>스캔 매칭용 참고 사진을 자동 촬영하기 위해 사용됩니다.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
