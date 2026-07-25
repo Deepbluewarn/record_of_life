@@ -43,6 +43,7 @@ dependencies:
   geolocator: ^13.0.0
   share_plus: ^10.0.0
   camera: ^0.11.0
+  permission_handler: ^11.3.0
 
 dev_dependencies:
   flutter_test:

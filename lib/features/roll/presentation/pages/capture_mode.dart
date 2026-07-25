@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:record_of_life/data/location.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
@@ -29,6 +30,7 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
   CameraController? _controller;
   Future<void>? _initFuture;
   String? _initError;
+  bool _permanentlyDenied = false;
 
   @override
   void initState() {
@@ -37,6 +39,26 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
   }
 
   Future<void> _initCamera() async {
+    // 웹은 permission_handler 미지원 — camera 패키지가 브라우저 프롬프트 처리.
+    if (!kIsWeb) {
+      var status = await Permission.camera.status;
+      if (!status.isGranted) {
+        status = await Permission.camera.request();
+      }
+      if (status.isPermanentlyDenied) {
+        if (mounted) {
+          setState(() {
+            _permanentlyDenied = true;
+            _initError = '카메라 권한이 영구 거부됨';
+          });
+        }
+        return;
+      }
+      if (!status.isGranted) {
+        if (mounted) setState(() => _initError = '카메라 권한 거부됨');
+        return;
+      }
+    }
     try {
       final cams = await availableCameras();
       if (cams.isEmpty) {
@@ -61,6 +83,14 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
     } catch (e) {
       if (mounted) setState(() => _initError = '카메라 초기화 실패: $e');
     }
+  }
+
+  Future<void> _retry() async {
+    setState(() {
+      _initError = null;
+      _permanentlyDenied = false;
+      _initFuture = _initCamera();
+    });
   }
 
   @override
@@ -92,6 +122,8 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
               controller: _controller,
               initFuture: _initFuture,
               initError: _initError,
+              permanentlyDenied: _permanentlyDenied,
+              onRetry: _retry,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -115,11 +147,15 @@ class _PreviewArea extends StatelessWidget {
   final CameraController? controller;
   final Future<void>? initFuture;
   final String? initError;
+  final bool permanentlyDenied;
+  final VoidCallback onRetry;
 
   const _PreviewArea({
     required this.controller,
     required this.initFuture,
     required this.initError,
+    required this.permanentlyDenied,
+    required this.onRetry,
   });
 
   @override
@@ -127,7 +163,9 @@ class _PreviewArea extends StatelessWidget {
     if (kIsWeb) {
       return _placeholder('웹에서는 실시간 카메라 미지원');
     }
-    if (initError != null) return _placeholder(initError!);
+    if (initError != null) {
+      return _errorPlaceholder(initError!);
+    }
     return FutureBuilder<void>(
       future: initFuture,
       builder: (context, snap) {
@@ -148,6 +186,36 @@ class _PreviewArea extends StatelessWidget {
     color: AppColors.surface,
     alignment: Alignment.center,
     child: Text(msg, style: const TextStyle(color: AppColors.inkMuted)),
+  );
+
+  Widget _errorPlaceholder(String msg) => Container(
+    height: 200,
+    color: AppColors.surface,
+    alignment: Alignment.center,
+    padding: const EdgeInsets.symmetric(horizontal: 24),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          msg,
+          style: const TextStyle(color: AppColors.inkMuted),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        if (permanentlyDenied)
+          OutlinedButton.icon(
+            icon: const Icon(Icons.settings, size: 16),
+            label: const Text('설정에서 권한 열기'),
+            onPressed: () => openAppSettings(),
+          )
+        else
+          OutlinedButton.icon(
+            icon: const Icon(Icons.refresh, size: 16),
+            label: const Text('다시 시도'),
+            onPressed: onRetry,
+          ),
+      ],
+    ),
   );
 }
 
