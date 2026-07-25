@@ -118,6 +118,92 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
     super.dispose();
   }
 
+  // 확인 버튼과 프리뷰 탭이 공유하는 저장 흐름.
+  Future<void> _handleConfirm(Roll currentRoll, int nextFrame) async {
+    final form = ref.read(newShotFormProvider(null));
+    if (!form.isValid) return;
+
+    if (nextFrame > currentRoll.totalShots) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('총 매수 초과'),
+          content: Text(
+            '이 롤의 총 매수는 ${currentRoll.totalShots}입니다. #$nextFrame을 계속 기록할까요?\n'
+            '(필름 실물이 여유분을 허용하는 경우에 유효)',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('계속'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
+
+    final pos = await tryGetPosition();
+    final imagePath = await _capture();
+    final shot = form
+        .toShot(rollId: currentRoll.id)
+        .copyWith(
+          idx: nextFrame,
+          gpsLat: pos?.lat,
+          gpsLng: pos?.lng,
+          imagePath: imagePath ?? form.imagePath,
+        );
+
+    await ref.read(shotProvider(currentRoll.id).notifier).addShot(shot);
+    ref.read(newShotFormProvider(null).notifier).resetForNextShot();
+    HapticFeedback.mediumImpact();
+
+    if (!mounted) return;
+    final justCompleted = nextFrame == currentRoll.totalShots;
+    final handedness = ref.read(settingsProvider).value?.handedness;
+    final width = MediaQuery.of(context).size.width;
+    final margin = handedness == Handedness.left
+        ? EdgeInsets.only(left: 16, right: width * 0.35, bottom: 16)
+        : EdgeInsets.only(left: width * 0.35, right: 16, bottom: 16);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            justCompleted
+                ? '#$nextFrame 저장 · 롤 촬영 완료 🎞'
+                : '#$nextFrame 저장됨',
+          ),
+          duration: Duration(milliseconds: justCompleted ? 2200 : 900),
+          behavior: SnackBarBehavior.floating,
+          margin: margin,
+        ),
+      );
+  }
+
+  Future<String?> _capture() async {
+    final c = _controller;
+    if (c == null || !c.value.isInitialized || c.value.isTakingPicture) {
+      return null;
+    }
+    try {
+      final xfile = await c.takePicture();
+      final dir = await getApplicationDocumentsDirectory();
+      final target =
+          '${dir.path}/shots/${DateTime.now().millisecondsSinceEpoch}_${xfile.name}';
+      final targetFile = File(target);
+      await targetFile.parent.create(recursive: true);
+      await xfile.saveTo(target);
+      return target;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final rollState = ref.watch(
@@ -143,6 +229,7 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
               initError: _initError,
               permanentlyDenied: _permanentlyDenied,
               onRetry: _retry,
+              onTapPreview: () => _handleConfirm(currentRoll, nextFrame),
             ),
             _LocationHint(
               access: _locationAccess,
@@ -155,9 +242,8 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
               ),
             ),
             _ConfirmBar(
-              roll: currentRoll,
               nextFrame: nextFrame,
-              controller: _controller,
+              onConfirm: () => _handleConfirm(currentRoll, nextFrame),
             ),
           ],
         ),
@@ -179,7 +265,10 @@ class _PreviewArea extends StatelessWidget {
     required this.initError,
     required this.permanentlyDenied,
     required this.onRetry,
+    required this.onTapPreview,
   });
+
+  final VoidCallback onTapPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -196,9 +285,24 @@ class _PreviewArea extends StatelessWidget {
         if (snap.connectionState != ConnectionState.done || c == null) {
           return _placeholder('카메라 준비 중...');
         }
-        return AspectRatio(
-          aspectRatio: c.value.aspectRatio,
-          child: CameraPreview(c),
+        // 프리뷰 자체가 셔터. 야외에서 확인 버튼까지 안 내려도 됨.
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTapPreview,
+          child: AspectRatio(
+            aspectRatio: c.value.aspectRatio,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CameraPreview(c),
+                const Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: _ShutterHint(),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -240,6 +344,32 @@ class _PreviewArea extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _ShutterHint extends StatelessWidget {
+  const _ShutterHint();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.touch_app, size: 12, color: Colors.white),
+          SizedBox(width: 4),
+          Text(
+            '탭하여 촬영',
+            style: TextStyle(fontSize: 11, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _LocationHint extends StatelessWidget {
@@ -287,15 +417,10 @@ class _LocationHint extends StatelessWidget {
 }
 
 class _ConfirmBar extends ConsumerWidget {
-  final Roll roll;
   final int nextFrame;
-  final CameraController? controller;
+  final VoidCallback onConfirm;
 
-  const _ConfirmBar({
-    required this.roll,
-    required this.nextFrame,
-    required this.controller,
-  });
+  const _ConfirmBar({required this.nextFrame, required this.onConfirm});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -312,7 +437,7 @@ class _ConfirmBar extends ConsumerWidget {
         width: double.infinity,
         height: 64,
         child: ElevatedButton(
-          onPressed: canSave ? () => _onConfirm(context, ref) : null,
+          onPressed: canSave ? onConfirm : null,
           child: Text(
             '확인 · #$nextFrame 저장',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
@@ -320,94 +445,5 @@ class _ConfirmBar extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _onConfirm(BuildContext context, WidgetRef ref) async {
-    // 총 매수 초과 시 사용자 확인.
-    if (nextFrame > roll.totalShots) {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('총 매수 초과'),
-          content: Text(
-            '이 롤의 총 매수는 ${roll.totalShots}입니다. #$nextFrame을 계속 기록할까요?\n'
-            '(필름 실물이 여유분을 허용하는 경우에 유효)',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('계속'),
-            ),
-          ],
-        ),
-      );
-      if (ok != true || !context.mounted) return;
-    }
-    await _save(context, ref);
-  }
-
-  Future<void> _save(BuildContext context, WidgetRef ref) async {
-    final form = ref.read(newShotFormProvider(null));
-    final pos = await tryGetPosition();
-    final imagePath = await _capture();
-
-    final shot = form
-        .toShot(rollId: roll.id)
-        .copyWith(
-          idx: nextFrame,
-          gpsLat: pos?.lat,
-          gpsLng: pos?.lng,
-          imagePath: imagePath ?? form.imagePath,
-        );
-
-    await ref.read(shotProvider(roll.id).notifier).addShot(shot);
-    ref.read(newShotFormProvider(null).notifier).resetForNextShot();
-    HapticFeedback.mediumImpact();
-
-    if (!context.mounted) return;
-    final justCompleted = nextFrame == roll.totalShots;
-    final handedness = ref.read(settingsProvider).value?.handedness;
-    final width = MediaQuery.of(context).size.width;
-    final EdgeInsets margin = handedness == Handedness.left
-        ? EdgeInsets.only(left: 16, right: width * 0.35, bottom: 16)
-        : EdgeInsets.only(left: width * 0.35, right: 16, bottom: 16);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            justCompleted
-                ? '#$nextFrame 저장 · 롤 촬영 완료 🎞'
-                : '#$nextFrame 저장됨',
-          ),
-          duration: Duration(milliseconds: justCompleted ? 2200 : 900),
-          behavior: SnackBarBehavior.floating,
-          margin: margin,
-        ),
-      );
-  }
-
-  Future<String?> _capture() async {
-    final c = controller;
-    if (c == null || !c.value.isInitialized || c.value.isTakingPicture) {
-      return null;
-    }
-    try {
-      final xfile = await c.takePicture();
-      // 앱 문서 디렉터리로 이동 저장(임시 캐시는 시스템이 지울 수 있음).
-      final dir = await getApplicationDocumentsDirectory();
-      final target =
-          '${dir.path}/shots/${DateTime.now().millisecondsSinceEpoch}_${xfile.name}';
-      final targetFile = File(target);
-      await targetFile.parent.create(recursive: true);
-      await xfile.saveTo(target);
-      return target;
-    } catch (_) {
-      return null;
-    }
   }
 }
