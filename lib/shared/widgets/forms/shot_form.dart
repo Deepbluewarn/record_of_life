@@ -28,8 +28,11 @@ class ShotForm extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 날짜 선택
-        Text('촬영 날짜', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
+        const Text(
+          '촬영 날짜',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
         InkWell(
           onTap: () async {
             final picked = await showDatePicker(
@@ -37,18 +40,6 @@ class ShotForm extends ConsumerWidget {
               initialDate: shotFormProvider.date ?? DateTime.now(),
               firstDate: DateTime(2000),
               lastDate: DateTime(2100),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: ColorScheme.light(
-                      primary: Colors.black,
-                      onPrimary: Colors.white,
-                      onSurface: Colors.black,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
             );
             if (picked != null) {
               ref.read(newShotFormProvider(shot).notifier).setDate(picked);
@@ -57,26 +48,30 @@ class ShotForm extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              border: Border.all(color: const Color(0xFFE5E5E5)),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today, size: 18, color: Colors.grey[600]),
-                SizedBox(width: 10),
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: Color(0xFF6E6E6E),
+                ),
+                const SizedBox(width: 10),
                 Text(
                   shotFormProvider.date != null
                       ? '${shotFormProvider.date!.year}. ${shotFormProvider.date!.month.toString().padLeft(2, '0')}. ${shotFormProvider.date!.day.toString().padLeft(2, '0')}'
                       : '날짜 선택',
-                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                  style: const TextStyle(fontSize: 16),
                 ),
               ],
             ),
           ),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
         // 렌즈 선택
         SelectionCard(
           label: '렌즈',

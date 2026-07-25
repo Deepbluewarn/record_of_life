@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:record_of_life/features/settings/pages/settings_page.dart';
+import 'package:record_of_life/shared/theme/app_theme.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -16,39 +17,44 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      toolbarHeight: 70,
-      backgroundColor: const Color.fromARGB(100, 216, 216, 216),
-      title: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      toolbarHeight: 68,
+      backgroundColor: AppColors.background,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      shape: const Border(
+        bottom: BorderSide(color: AppColors.border, width: 1),
+      ),
+      titleSpacing: AppSpacing.lg,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+              letterSpacing: 1.5,
+              color: AppColors.ink,
+            ),
+          ),
+          if (subtitle != null)
             Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-                letterSpacing: 1,
+              subtitle!,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 11,
+                letterSpacing: 0.5,
+                color: AppColors.inkMuted,
               ),
             ),
-            if (subtitle != null)
-              Text(
-                subtitle!,
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 2,
-                ),
-              ),
-          ],
-        ),
+        ],
       ),
       actions: [
         ...actions,
         IconButton(
-          icon: const Icon(Icons.settings),
+          icon: const Icon(Icons.settings_outlined),
           tooltip: '설정',
           onPressed: () => Navigator.push(
             context,
@@ -60,5 +66,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(70);
+  Size get preferredSize => const Size.fromHeight(68);
 }
