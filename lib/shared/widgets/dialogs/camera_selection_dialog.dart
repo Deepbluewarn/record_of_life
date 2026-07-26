@@ -27,7 +27,8 @@ class CameraSelectionDialog extends ConsumerWidget {
         height: MediaQuery.of(context).size.height * 0.4,
         child: cameraState.when(
           data: (data) {
-            final cameras = [...data.cameras];
+            // 내가 소유한 카메라만 노출.
+            final cameras = data.cameras.where((c) => c.owned).toList();
             if (matchFormat != null) {
               cameras.sort((a, b) {
                 final aMatch = a.format == matchFormat ? 0 : 1;

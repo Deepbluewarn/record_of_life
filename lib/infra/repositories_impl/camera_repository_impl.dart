@@ -49,6 +49,11 @@ class CameraRepositoryImpl extends CameraRepository {
       'lastUsedAt': DateTime.now().toIso8601String(),
     });
   }
+
+  @override
+  Future<void> setCameraOwned(String id, bool owned) async {
+    await AppStore.cameras.record(id).update(_store.db, {'owned': owned});
+  }
 }
 
 // lastUsedAt desc(최근이 위), null은 뒤로, tie는 title 오름차순.

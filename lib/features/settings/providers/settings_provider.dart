@@ -5,11 +5,16 @@ import 'package:record_of_life/features/roll/presentation/providers/repository_p
 enum Handedness { left, right }
 
 class AppSettings {
-  final Handedness? handedness; // null = 아직 온보딩 미완
-  const AppSettings({this.handedness});
+  final Handedness? handedness;
+  final bool equipmentReady; // 온보딩에서 내 장비 선택 완료 여부
 
-  AppSettings copyWith({Handedness? handedness}) =>
-      AppSettings(handedness: handedness ?? this.handedness);
+  const AppSettings({this.handedness, this.equipmentReady = false});
+
+  AppSettings copyWith({Handedness? handedness, bool? equipmentReady}) =>
+      AppSettings(
+        handedness: handedness ?? this.handedness,
+        equipmentReady: equipmentReady ?? this.equipmentReady,
+      );
 }
 
 final settingsStoreProvider = Provider(
@@ -28,13 +33,22 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
               (v) => v.name == h,
               orElse: () => Handedness.right,
             ),
+      equipmentReady: map['equipmentReady'] as bool? ?? false,
     );
   }
 
   Future<void> setHandedness(Handedness value) async {
     await ref.read(settingsStoreProvider).put({'handedness': value.name});
-    state = AsyncData((state.value ?? const AppSettings())
-        .copyWith(handedness: value));
+    state = AsyncData(
+      (state.value ?? const AppSettings()).copyWith(handedness: value),
+    );
+  }
+
+  Future<void> setEquipmentReady(bool value) async {
+    await ref.read(settingsStoreProvider).put({'equipmentReady': value});
+    state = AsyncData(
+      (state.value ?? const AppSettings()).copyWith(equipmentReady: value),
+    );
   }
 }
 

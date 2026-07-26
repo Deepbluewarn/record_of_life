@@ -6,6 +6,7 @@ import 'package:record_of_life/data/settings_store.dart';
 import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/features/roll/presentation/pages/home_page.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
+import 'package:record_of_life/features/settings/pages/equipment_setup_page.dart';
 import 'package:record_of_life/features/settings/pages/handedness_onboarding.dart';
 import 'package:record_of_life/features/settings/providers/settings_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
@@ -44,7 +45,7 @@ class MainApp extends StatelessWidget {
   }
 }
 
-// 손잡이 미설정 = 온보딩. 설정 완료 = 홈.
+// 온보딩 3단계 게이트: 손잡이 → 내 장비 → 홈.
 class _Root extends ConsumerWidget {
   const _Root();
 
@@ -52,9 +53,13 @@ class _Root extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     return settings.when(
-      data: (s) => s.handedness == null
-          ? const HandednessOnboardingPage()
-          : const HomePage(),
+      data: (s) {
+        if (s.handedness == null) return const HandednessOnboardingPage();
+        if (!s.equipmentReady) {
+          return const EquipmentSetupPage(isOnboarding: true);
+        }
+        return const HomePage();
+      },
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),

@@ -6,6 +6,7 @@ import 'package:record_of_life/features/roll/presentation/pages/all_rolls_page.d
 import 'package:record_of_life/features/roll/presentation/pages/capture_mode.dart';
 import 'package:record_of_life/features/roll/presentation/pages/roll_details.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
@@ -84,12 +85,29 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  void _startCapture(BuildContext context, WidgetRef ref, Roll roll) {
+  Future<void> _startCapture(
+    BuildContext context,
+    WidgetRef ref,
+    Roll roll,
+  ) async {
     final notifier = ref.read(newShotFormProvider(null).notifier);
     notifier.reset();
-    if (roll.defaultLensId != null) {
+    final shots = await ref
+        .read(shotRepositoryProvider)
+        .getShotsByRollId(roll.id);
+    if (shots.isNotEmpty) {
+      shots.sort((a, b) => b.idx.compareTo(a.idx));
+      final last = shots.first;
+      notifier
+        ..setLensId(last.lensId ?? roll.defaultLensId)
+        ..setAperture(last.aperture)
+        ..setShutterSpeed(last.shutterSpeed)
+        ..setExposureComp(last.exposureComp)
+        ..setIso(last.iso);
+    } else if (roll.defaultLensId != null) {
       notifier.setLensId(roll.defaultLensId);
     }
+    if (!context.mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => CaptureModePage(roll: roll)),

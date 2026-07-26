@@ -7,4 +7,5 @@ abstract class CameraRepository {
   Future<void> updateCamera(Camera camera);
   Future<bool> deleteCamera(String id);
   Future<void> touchCamera(String id); // 마지막 사용 시각 갱신
+  Future<void> setCameraOwned(String id, bool owned);
 }

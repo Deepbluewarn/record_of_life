@@ -21,63 +21,65 @@ class LensSelectionDialog extends ConsumerWidget {
         width: double.maxFinite,
         height: MediaQuery.of(context).size.height * 0.4,
         child: lensState.when(
-          data: (data) => ListView.builder(
-            itemCount: data.lenses.length + 1,
-            itemBuilder: (context, index) {
-              // 마지막 항목: 새 렌즈 추가 버튼
-              if (index == data.lenses.length) {
+          data: (data) {
+            final lenses = data.lenses.where((l) => l.owned).toList();
+            return ListView.builder(
+              itemCount: lenses.length + 1,
+              itemBuilder: (context, index) {
+                if (index == lenses.length) {
+                  return ListTile(
+                    leading: const Icon(Icons.add, color: AppColors.ink),
+                    title: const Text(
+                      '새 렌즈 추가',
+                      style: TextStyle(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        useSafeArea: true,
+                        isScrollControlled: true,
+                        builder: (context) => Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).viewInsets.bottom,
+                          ),
+                          child: AddLensBottomSheet(),
+                        ),
+                      );
+                    },
+                  );
+                }
+                final lens = lenses[index];
                 return ListTile(
-                  leading: const Icon(Icons.add, color: AppColors.ink),
-                  title: const Text(
-                    '새 렌즈 추가',
-                    style: TextStyle(
+                  title: Text(
+                    lens.name,
+                    style: const TextStyle(
                       color: AppColors.ink,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      useSafeArea: true,
-                      isScrollControlled: true,
-                      builder: (context) => Padding(
-                        padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).viewInsets.bottom,
-                        ),
-                        child: AddLensBottomSheet(),
-                      ),
-                    );
+                  subtitle: Text(
+                    [
+                      if (lens.focalLength != null) '${lens.focalLength}mm',
+                      if (lens.maxAperture != null) 'f/${lens.maxAperture}',
+                      if (lens.mount != null) lens.mount,
+                    ].join(' · '),
+                    style: const TextStyle(color: AppColors.inkMuted),
+                  ),
+                  onTap: () async {
+                    await ref
+                        .read(lensRepositoryProvider)
+                        .touchLens(lens.id);
+                    ref.invalidate(lensProvider);
+                    onSelected(lens);
                   },
                 );
-              }
-              final lens = data.lenses[index];
-              return ListTile(
-                title: Text(
-                  lens.name,
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: Text(
-                  [
-                    if (lens.focalLength != null) '${lens.focalLength}mm',
-                    if (lens.maxAperture != null) 'f/${lens.maxAperture}',
-                    if (lens.mount != null) lens.mount,
-                  ].join(' · '),
-                  style: const TextStyle(color: AppColors.inkMuted),
-                ),
-                onTap: () async {
-                  await ref
-                      .read(lensRepositoryProvider)
-                      .touchLens(lens.id);
-                  ref.invalidate(lensProvider);
-                  onSelected(lens);
-                },
-              );
-            },
-          ),
-          loading: () => Center(child: CircularProgressIndicator()),
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => Text('Error: $error'),
         ),
       ),

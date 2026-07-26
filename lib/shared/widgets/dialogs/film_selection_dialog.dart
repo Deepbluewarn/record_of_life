@@ -27,7 +27,7 @@ class FilmSelectionDialog extends ConsumerWidget {
         height: MediaQuery.of(context).size.height * 0.4,
         child: filmState.when(
           data: (data) {
-            final films = [...data.films];
+            final films = data.films.where((f) => f.owned).toList();
             if (matchFormat != null) {
               films.sort((a, b) {
                 final aMatch = a.format == matchFormat ? 0 : 1;

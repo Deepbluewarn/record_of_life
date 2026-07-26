@@ -7,6 +7,7 @@ import 'package:record_of_life/features/roll/presentation/pages/add_roll.dart';
 import 'package:record_of_life/features/roll/presentation/pages/capture_mode.dart';
 import 'package:record_of_life/features/roll/presentation/pages/picture_detail.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
@@ -191,14 +192,28 @@ class RollDetailsPage extends ConsumerWidget {
               child: ElevatedButton.icon(
                 onPressed: currentRoll.status == RollStatus.archived
                     ? null
-                    : () {
+                    : () async {
                         final formNotifier = ref.read(
                           newShotFormProvider(null).notifier,
                         );
                         formNotifier.reset();
-                        if (currentRoll.defaultLensId != null) {
+                        // 마지막 샷 값을 default로 (idx 최대). 없으면 롤 defaultLensId만.
+                        final shots = await ref
+                            .read(shotRepositoryProvider)
+                            .getShotsByRollId(currentRoll.id);
+                        if (shots.isNotEmpty) {
+                          shots.sort((a, b) => b.idx.compareTo(a.idx));
+                          final last = shots.first;
+                          formNotifier
+                            ..setLensId(last.lensId ?? currentRoll.defaultLensId)
+                            ..setAperture(last.aperture)
+                            ..setShutterSpeed(last.shutterSpeed)
+                            ..setExposureComp(last.exposureComp)
+                            ..setIso(last.iso);
+                        } else if (currentRoll.defaultLensId != null) {
                           formNotifier.setLensId(currentRoll.defaultLensId);
                         }
+                        if (!context.mounted) return;
                         Navigator.push(
                           context,
                           MaterialPageRoute(

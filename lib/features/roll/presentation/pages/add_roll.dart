@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/enums/roll_status.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_roll_form_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
 import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
@@ -14,13 +15,43 @@ import 'package:record_of_life/shared/widgets/selection_card.dart';
 import 'package:record_of_life/shared/widgets/simple_text_field.dart';
 import 'package:record_of_life/shared/widgets/date_picker_field.dart';
 
-class AddRollPage extends ConsumerWidget {
+class AddRollPage extends ConsumerStatefulWidget {
   final Roll? roll;
 
   const AddRollPage({super.key, this.roll});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AddRollPage> createState() => _AddRollPageState();
+}
+
+class _AddRollPageState extends ConsumerState<AddRollPage> {
+  @override
+  void initState() {
+    super.initState();
+    // 신규 롤일 때만 마지막 롤의 카메라·필름·기본 렌즈를 default로 채움.
+    if (widget.roll == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _prefillFromLast());
+    }
+  }
+
+  Future<void> _prefillFromLast() async {
+    final rolls = await ref.read(rollRepositoryProvider).getAllRolls();
+    if (rolls.isEmpty || !mounted) return;
+    rolls.sort((a, b) {
+      final aT = a.startedAt ?? DateTime(0);
+      final bT = b.startedAt ?? DateTime(0);
+      return bT.compareTo(aT);
+    });
+    final last = rolls.first;
+    final n = ref.read(newRollFormProvider(widget.roll).notifier);
+    if (last.camera != null) n.setCamera(last.camera!);
+    if (last.film != null) n.setFilm(last.film!);
+    if (last.defaultLensId != null) n.setDefaultLensId(last.defaultLensId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final roll = widget.roll;
     final rollFormState = ref.watch(newRollFormProvider(roll));
     final isEditMode = roll != null;
 
@@ -35,7 +66,7 @@ class AddRollPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(isEditMode ? roll!.id : ''),
+              Text(isEditMode ? roll.id : ''),
               // 헤더
               Text(
                 isEditMode ? '롤 내용을 수정합니다.' : '새 롤을 추가합니다',
@@ -294,7 +325,7 @@ class AddRollPage extends ConsumerWidget {
                               ? ref
                                     .read(rollProvider(null).notifier)
                                     .updateRoll(
-                                      rollFormState.toRoll(rollId: roll!.id),
+                                      rollFormState.toRoll(rollId: roll.id),
                                     )
                               : ref
                                     .read(rollProvider(null).notifier)

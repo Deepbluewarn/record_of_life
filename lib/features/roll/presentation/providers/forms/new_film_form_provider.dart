@@ -35,7 +35,14 @@ class NewFilmFormState {
   }
 
   Film toFilm() {
-    return Film(name: name, brand: brand, iso: iso, format: format, note: note);
+    return Film(
+      name: name,
+      brand: brand,
+      iso: iso,
+      format: format,
+      note: note,
+      owned: true,
+    );
   }
 }
 

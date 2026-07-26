@@ -6,4 +6,5 @@ abstract class LensRepository {
   Future<void> updateLens(Lens lens);
   Future<bool> deleteLens(String id);
   Future<void> touchLens(String id);
+  Future<void> setLensOwned(String id, bool owned);
 }

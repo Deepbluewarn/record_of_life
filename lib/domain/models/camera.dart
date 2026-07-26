@@ -8,6 +8,7 @@ class Camera {
   final String? mount;
   final String? notes;
   final DateTime? lastUsedAt;
+  final bool owned; // 사용자 소유 여부. 목록 필터 기준.
 
   Camera({
     String? id,
@@ -17,6 +18,7 @@ class Camera {
     this.mount,
     this.notes,
     this.lastUsedAt,
+    this.owned = false,
   }) : id = id ?? const Uuid().v4();
 
   Map<String, Object?> toMap() => {
@@ -27,6 +29,7 @@ class Camera {
     'mount': mount,
     'notes': notes,
     'lastUsedAt': lastUsedAt?.toIso8601String(),
+    'owned': owned,
   };
 
   factory Camera.fromMap(Map<String, Object?> m) => Camera(
@@ -39,5 +42,6 @@ class Camera {
     lastUsedAt: m['lastUsedAt'] == null
         ? null
         : DateTime.parse(m['lastUsedAt'] as String),
+    owned: m['owned'] as bool? ?? false,
   );
 }

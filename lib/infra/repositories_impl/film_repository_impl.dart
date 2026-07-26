@@ -48,6 +48,11 @@ class FilmRepositoryImpl extends FilmRepository {
       'lastUsedAt': DateTime.now().toIso8601String(),
     });
   }
+
+  @override
+  Future<void> setFilmOwned(String id, bool owned) async {
+    await AppStore.films.record(id).update(_store.db, {'owned': owned});
+  }
 }
 
 int _byRecency(Film a, Film b) {

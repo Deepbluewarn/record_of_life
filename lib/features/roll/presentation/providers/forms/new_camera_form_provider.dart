@@ -35,12 +35,14 @@ class NewCameraFormState {
   }
 
   Camera toCamera() {
+    // 사용자가 직접 추가한 카메라 = 소유 자동 표시.
     return Camera(
       title: title,
       brand: brand,
       format: format,
       mount: mount,
       notes: notes,
+      owned: true,
     );
   }
 }

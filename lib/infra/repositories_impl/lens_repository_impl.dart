@@ -47,6 +47,11 @@ class LensRepositoryImpl extends LensRepository {
       'lastUsedAt': DateTime.now().toIso8601String(),
     });
   }
+
+  @override
+  Future<void> setLensOwned(String id, bool owned) async {
+    await AppStore.lenses.record(id).update(_store.db, {'owned': owned});
+  }
 }
 
 int _byRecency(Lens a, Lens b) {

@@ -43,6 +43,7 @@ class NewLensFormState {
           : null,
       mount: mount,
       notes: notes,
+      owned: true,
     );
   }
 }

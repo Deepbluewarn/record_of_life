@@ -4,6 +4,7 @@ import 'package:record_of_life/data/seeds.dart';
 import 'package:record_of_life/data/settings_store.dart';
 import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
+import 'package:record_of_life/features/settings/pages/equipment_setup_page.dart';
 import 'package:record_of_life/features/settings/providers/settings_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
@@ -24,10 +25,22 @@ class SettingsPage extends ConsumerWidget {
           _SectionTitle('사용성'),
           _HandednessRow(current: handedness),
           const SizedBox(height: AppSpacing.xxl),
+          _SectionTitle('내 장비'),
+          _Tile(
+            title: '카메라 · 필름 · 렌즈 관리',
+            subtitle: '롤·샷 선택 목록에 노출할 소유 장비를 지정.',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const EquipmentSetupPage(),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxl),
           _SectionTitle('데이터'),
           _Tile(
-            title: '기본 카메라·필름·렌즈 다시 채우기',
-            subtitle: '삭제된 시드도 다시 나타납니다. 사용자가 편집한 항목은 유지.',
+            title: '기본 카메라·필름·렌즈 카탈로그 다시 채우기',
+            subtitle: '삭제된 시드도 다시 나타납니다. 소유(owned)·편집 값은 유지.',
             onTap: () => _reseed(context, ref),
           ),
         ],

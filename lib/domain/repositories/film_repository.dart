@@ -7,4 +7,5 @@ abstract class FilmRepository {
   Future<void> updateFilm(Film film);
   Future<bool> deleteFilm(String id);
   Future<void> touchFilm(String id);
+  Future<void> setFilmOwned(String id, bool owned);
 }
