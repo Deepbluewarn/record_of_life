@@ -8,6 +8,7 @@ class NewFilmFormState {
   String? brand;
   int? iso;
   String? format;
+  int? defaultShots;
   String? note;
 
   NewFilmFormState({
@@ -15,6 +16,7 @@ class NewFilmFormState {
     this.brand,
     this.iso,
     this.format,
+    this.defaultShots,
     this.note,
   });
 
@@ -23,6 +25,7 @@ class NewFilmFormState {
     String? brand,
     int? iso,
     String? format,
+    int? defaultShots,
     String? note,
   }) {
     return NewFilmFormState(
@@ -30,6 +33,7 @@ class NewFilmFormState {
       brand: brand ?? this.brand,
       iso: iso ?? this.iso,
       format: format ?? this.format,
+      defaultShots: defaultShots ?? this.defaultShots,
       note: note ?? this.note,
     );
   }
@@ -40,6 +44,7 @@ class NewFilmFormState {
       brand: brand,
       iso: iso,
       format: format,
+      defaultShots: defaultShots,
       note: note,
       owned: true,
     );
@@ -66,6 +71,10 @@ class NewFilmFormProvider extends AsyncNotifier<NewFilmFormState> {
 
   void setFormat(String? format) {
     state = AsyncValue.data(state.value!.copyWith(format: format));
+  }
+
+  void setDefaultShots(int? v) {
+    state = AsyncValue.data(state.value!.copyWith(defaultShots: v));
   }
 
   void setNote(String? note) {

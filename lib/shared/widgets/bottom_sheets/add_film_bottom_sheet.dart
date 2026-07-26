@@ -124,6 +124,17 @@ class _AddFilmBottomSheetState extends ConsumerState<AddFilmBottomSheet> {
           ],
           const SizedBox(height: 16),
           TextField(
+            keyboardType: TextInputType.number,
+            onChanged: (v) => ref
+                .read(newFilmFormProvider.notifier)
+                .setDefaultShots(int.tryParse(v)),
+            decoration: const InputDecoration(
+              labelText: '기본 컷 수 (선택)',
+              hintText: '예: 36, 24, 12',
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
             onChanged: (v) =>
                 ref.read(newFilmFormProvider.notifier).setNote(v),
             decoration: const InputDecoration(
