@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/roll.dart';
@@ -8,10 +10,9 @@ import 'package:record_of_life/features/roll/presentation/pages/roll_details.dar
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
+import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
-import 'package:record_of_life/shared/widgets/roll_card.dart';
-import 'package:record_of_life/shared/widgets/section_header.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -21,66 +22,61 @@ class HomePage extends ConsumerWidget {
     final rollState = ref.watch(rollProvider(RollFilter.working));
 
     return Scaffold(
-      appBar: CustomAppBar(title: 'ROL', subtitle: '롤 목록'),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          children: [
-            SectionHeader(
-              title: '진행 중인 롤',
-              count: rollState.maybeWhen(
-                data: (data) => data.rolls.length,
-                orElse: () => 0,
-              ),
-              onActionPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AllRollsPage()),
-              ),
-            ),
-            Expanded(
-              child: rollState.when(
-                data: (rollData) {
-                  if (rollData.rolls.isEmpty) {
-                    return _EmptyState(
-                      onCreate: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => AddRollPage()),
+      appBar: CustomAppBar(title: 'ROL', subtitle: '진행 중'),
+      body: rollState.when(
+        data: (data) => data.rolls.isEmpty
+            ? _EmptyState(
+                onCreate: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => AddRollPage()),
+                ),
+              )
+            : ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                itemCount: data.rolls.length + 1,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AppSpacing.xl),
+                itemBuilder: (context, i) {
+                  if (i == data.rolls.length) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.md,
+                      ),
+                      child: TextButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AllRollsPage(),
+                          ),
+                        ),
+                        child: const Text('전체 롤 보기'),
                       ),
                     );
                   }
-                  return ListView.separated(
-                    itemCount: rollData.rolls.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: AppSpacing.sm),
-                    itemBuilder: (context, i) {
-                      final roll = rollData.rolls[i];
-                      return _HomeRollTile(
-                        roll: roll,
-                        onOpen: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => RollDetailsPage(roll: roll),
-                          ),
-                        ),
-                        onQuickCapture: () => _startCapture(context, ref, roll),
-                      );
-                    },
+                  final roll = data.rolls[i];
+                  return _FilmStrip(
+                    roll: roll,
+                    onOpen: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RollDetailsPage(roll: roll),
+                      ),
+                    ),
+                    onQuickCapture: () => _startCapture(context, ref, roll),
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('오류: $e')),
               ),
-            ),
-            TextButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AddRollPage()),
-              ),
-              icon: const Icon(Icons.add),
-              label: const Text('새 롤 추가'),
-            ),
-          ],
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('오류: $e')),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => AddRollPage()),
         ),
+        icon: const Icon(Icons.add),
+        label: const Text('새 롤'),
       ),
     );
   }
@@ -115,43 +111,110 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-// 홈 전용 롤 카드 래퍼: 카드 탭 = 상세, 우측 '지금 촬영' 액션 = 캡처 진입.
-class _HomeRollTile extends StatelessWidget {
+// 각 롤 = 세로 필름 스트립. 상단 제목·진행도, 검정 밴드 안 프레임 셀,
+// 하단 좌우 카메라·필름.
+class _FilmStrip extends ConsumerWidget {
   final Roll roll;
   final VoidCallback onOpen;
   final VoidCallback onQuickCapture;
 
-  const _HomeRollTile({
+  const _FilmStrip({
     required this.roll,
     required this.onOpen,
     required this.onQuickCapture,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Hero(
-          tag: roll.id,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onOpen,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: RollCard(roll: roll),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shotState = ref.watch(shotProvider(roll.id));
+    final shots = shotState.value?.shots ?? const [];
+
+    return GestureDetector(
+      onTap: onOpen,
+      onLongPress: onQuickCapture,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    roll.title ?? '제목 없음',
+                    style: Theme.of(context).textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  '${roll.shotsDone}/${roll.totalShots}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ),
           ),
-        ),
-        Positioned(
-          right: 4,
-          top: 4,
-          child: IconButton(
-            tooltip: '입력 모드 시작',
-            icon: const Icon(Icons.camera_alt_outlined),
-            onPressed: onQuickCapture,
+          const SizedBox(height: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            color: Colors.black,
+            child: SizedBox(
+              height: 92,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: roll.totalShots,
+                itemBuilder: (context, i) {
+                  final done = i < roll.shotsDone;
+                  final shot = shots.where((s) => s.idx == i + 1).firstOrNull;
+                  final img = shot?.imagePath;
+                  return Container(
+                    width: 76,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: done ? Colors.white : Colors.black,
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: img != null
+                        ? Image.file(File(img), fit: BoxFit.cover)
+                        : Center(
+                            child: Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                color: done ? Colors.black : Colors.white38,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                  );
+                },
+              ),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: AppSpacing.sm),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    roll.camera?.title ?? '카메라 —',
+                    style: Theme.of(context).textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Text(
+                  roll.film?.name ?? '필름 —',
+                  style: Theme.of(context).textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
