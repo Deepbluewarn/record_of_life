@@ -94,9 +94,16 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
                 ? '#$nextFrame 저장 · 롤 촬영 완료 🎞'
                 : '#$nextFrame 저장됨',
           ),
-          duration: Duration(milliseconds: justCompleted ? 2200 : 900),
+          duration: Duration(milliseconds: justCompleted ? 3200 : 1600),
           behavior: SnackBarBehavior.floating,
           margin: margin,
+          action: SnackBarAction(
+            label: '확인',
+            textColor: Colors.white,
+            onPressed: () {
+              if (mounted) Navigator.pop(context);
+            },
+          ),
         ),
       );
   }
