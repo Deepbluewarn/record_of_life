@@ -40,12 +40,12 @@ class CameraSelectionDialog extends ConsumerWidget {
               itemBuilder: (context, index) {
                 if (index == cameras.length) {
                   return ListTile(
-                    leading: Icon(Icons.add, color: AppColors.primary),
-                    title: Text(
+                    leading: const Icon(Icons.add, color: AppColors.ink),
+                    title: const Text(
                       '새 카메라 추가',
                       style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     onTap: () {
@@ -69,16 +69,19 @@ class CameraSelectionDialog extends ConsumerWidget {
                 return ListTile(
                   title: Text(
                     camera.title,
-                    style: TextStyle(color: mismatched ? Colors.grey : null),
+                    style: TextStyle(
+                      color: mismatched ? AppColors.inkMuted : AppColors.ink,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   subtitle: Text(
                     '${camera.brand ?? 'Unknown'} · ${camera.format ?? ''}',
-                    style: TextStyle(color: mismatched ? Colors.grey : null),
+                    style: const TextStyle(color: AppColors.inkMuted),
                   ),
                   trailing: mismatched
                       ? const Icon(
-                          Icons.warning_amber,
-                          color: Colors.amber,
+                          Icons.warning_amber_rounded,
+                          color: AppColors.inkMuted,
                           size: 18,
                         )
                       : null,
@@ -97,7 +100,6 @@ class CameraSelectionDialog extends ConsumerWidget {
           error: (error, stackTrace) => Text('Error: $error'),
         ),
       ),
-      backgroundColor: AppColors.surfaceLight,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),

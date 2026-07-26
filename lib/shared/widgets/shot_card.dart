@@ -13,123 +13,103 @@ class ShotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            // 좌측: 썸네일
-            Column(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          _Thumb(imagePath: shot.imagePath),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.max,
               children: [
-                // 썸네일
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey[400]!, width: 0.5),
-                  ),
-                  child: shot.imagePath != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            File(shot.imagePath!),
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : Center(
-                          child: Icon(
-                            Icons.image_not_supported,
-                            color: Colors.grey[400],
-                            size: 32,
-                          ),
-                        ),
+                Text(
+                  '#${shot.idx}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                Text(
+                  _formatDate(shot.date),
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
-            const SizedBox(width: 16),
-            // 중간: 컷 번호 + 날짜
-            Expanded(
-              child: SizedBox(
-                height: 80,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (shot.aperture != null)
                     Text(
-                      '컷 ${index + 1}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'f/${shot.aperture!.value}',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
+                  if (shot.shutterSpeed != null)
                     Text(
-                      _formatDate(shot.date),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      shot.shutterSpeed!.label,
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
-                  ],
-                ),
+                ],
               ),
-            ),
-            const SizedBox(width: 16),
-            // 우측: 카메라 설정 (세로)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // 조리개
-                Text(
-                  shot.aperture.toString(),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  textAlign: TextAlign.right,
-                ),
-                const SizedBox(height: 4),
-                // 셔터 스피드
-                Text(
-                  shot.shutterSpeed.toString(),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  textAlign: TextAlign.right,
-                ),
-                const SizedBox(height: 12),
-                // 우측 하단: 평가 (별점)
+              if (shot.rating != null && shot.rating! > 0)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // 평가
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '${shot.rating ?? 0}★',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.secondary,
-                        ),
-                      ),
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    shot.rating!,
+                    (_) => const Icon(
+                      Icons.star,
+                      size: 12,
+                      color: AppColors.ink,
                     ),
-                  ],
+                  ),
                 ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  String _formatDate(DateTime? dateTime) {
-    if (dateTime == null) return '날짜 미정';
-    return '${dateTime.year}. ${dateTime.month}. ${dateTime.day}';
+  String _formatDate(DateTime? d) {
+    if (d == null) return '날짜 미정';
+    return '${d.year}. ${d.month.toString().padLeft(2, '0')}. '
+        '${d.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _Thumb extends StatelessWidget {
+  final String? imagePath;
+  const _Thumb({required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: imagePath != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Image.file(File(imagePath!), fit: BoxFit.cover),
+            )
+          : const Icon(
+              Icons.image_outlined,
+              color: AppColors.inkMuted,
+              size: 26,
+            ),
+    );
   }
 }

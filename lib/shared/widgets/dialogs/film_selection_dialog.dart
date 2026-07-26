@@ -40,12 +40,12 @@ class FilmSelectionDialog extends ConsumerWidget {
               itemBuilder: (context, index) {
                 if (index == films.length) {
                   return ListTile(
-                    leading: Icon(Icons.add, color: AppColors.primary),
-                    title: Text(
+                    leading: const Icon(Icons.add, color: AppColors.ink),
+                    title: const Text(
                       '새 필름 추가',
                       style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     onTap: () {
@@ -70,19 +70,18 @@ class FilmSelectionDialog extends ConsumerWidget {
                   title: Text(
                     film.name,
                     style: TextStyle(
-                      color: mismatched ? Colors.grey : null,
+                      color: mismatched ? AppColors.inkMuted : AppColors.ink,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   subtitle: Text(
                     '${film.brand ?? 'Unknown'} · ${film.format ?? ''}',
-                    style: TextStyle(
-                      color: mismatched ? Colors.grey : null,
-                    ),
+                    style: const TextStyle(color: AppColors.inkMuted),
                   ),
                   trailing: mismatched
                       ? const Icon(
-                          Icons.warning_amber,
-                          color: Colors.amber,
+                          Icons.warning_amber_rounded,
+                          color: AppColors.inkMuted,
                           size: 18,
                         )
                       : null,
@@ -101,7 +100,6 @@ class FilmSelectionDialog extends ConsumerWidget {
           error: (error, stackTrace) => Text('Error: $error'),
         ),
       ),
-      backgroundColor: AppColors.surfaceLight,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),

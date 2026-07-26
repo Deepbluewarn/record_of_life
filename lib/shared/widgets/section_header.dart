@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:record_of_life/shared/theme/app_theme.dart';
 
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
@@ -17,31 +18,22 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 4,
+        vertical: AppSpacing.lg,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(width: AppSpacing.sm),
               Text(
-                title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                '$count개',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey[500],
-                ),
+                '$count',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ),
@@ -49,18 +41,14 @@ class SectionHeader extends StatelessWidget {
             TextButton(
               onPressed: onActionPressed,
               style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: Text(
-                actionLabel,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
-              ),
+              child: Text(actionLabel),
             ),
         ],
       ),

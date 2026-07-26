@@ -27,12 +27,12 @@ class LensSelectionDialog extends ConsumerWidget {
               // 마지막 항목: 새 렌즈 추가 버튼
               if (index == data.lenses.length) {
                 return ListTile(
-                  leading: Icon(Icons.add, color: AppColors.primary),
-                  title: Text(
+                  leading: const Icon(Icons.add, color: AppColors.ink),
+                  title: const Text(
                     '새 렌즈 추가',
                     style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
+                      color: AppColors.ink,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   onTap: () {
@@ -52,13 +52,20 @@ class LensSelectionDialog extends ConsumerWidget {
               }
               final lens = data.lenses[index];
               return ListTile(
-                title: Text(lens.name),
+                title: Text(
+                  lens.name,
+                  style: const TextStyle(
+                    color: AppColors.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 subtitle: Text(
                   [
                     if (lens.focalLength != null) '${lens.focalLength}mm',
                     if (lens.maxAperture != null) 'f/${lens.maxAperture}',
                     if (lens.mount != null) lens.mount,
                   ].join(' · '),
+                  style: const TextStyle(color: AppColors.inkMuted),
                 ),
                 onTap: () async {
                   await ref
@@ -74,9 +81,11 @@ class LensSelectionDialog extends ConsumerWidget {
           error: (error, stackTrace) => Text('Error: $error'),
         ),
       ),
-      backgroundColor: AppColors.surfaceLight,
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: Text('취소')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
       ],
     );
   }
