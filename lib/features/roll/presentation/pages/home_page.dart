@@ -8,6 +8,8 @@ import 'package:record_of_life/features/roll/presentation/pages/roll_details.dar
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
+import 'package:record_of_life/prototype/home_variants.dart';
+import 'package:record_of_life/prototype/prototype_switcher.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
 import 'package:record_of_life/shared/widgets/roll_card.dart';
@@ -18,6 +20,18 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // PROTOTYPE swap — 홈 3안. main으로 fold하면 삭제.
+    return PrototypeScaffold(
+      variants: [
+        (label: '필름 스트립', builder: (_) => const HomeVariantA()),
+        (label: '노트', builder: (_) => const HomeVariantB()),
+        (label: '다음 액션', builder: (_) => const HomeVariantC()),
+      ],
+    );
+  }
+
+  // ignore: unused_element
+  Widget _originalBuild(BuildContext context, WidgetRef ref) {
     final rollState = ref.watch(rollProvider(RollFilter.working));
 
     return Scaffold(
