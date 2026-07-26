@@ -7,6 +7,8 @@ import 'package:record_of_life/features/roll/presentation/providers/forms/new_sh
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 import 'package:record_of_life/features/settings/providers/settings_provider.dart';
+import 'package:record_of_life/prototype/capture_variants.dart';
+import 'package:record_of_life/prototype/prototype_switcher.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/forms/shot_form.dart';
 
@@ -110,6 +112,27 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
 
   @override
   Widget build(BuildContext context) {
+    // PROTOTYPE swap — 3 variants of capture mode.
+    return PrototypeScaffold(
+      variants: [
+        (
+          label: '필수+접힘',
+          builder: (_) => CaptureVariantA(roll: widget.roll),
+        ),
+        (
+          label: '큰 카운터',
+          builder: (_) => CaptureVariantB(roll: widget.roll),
+        ),
+        (
+          label: '2x2 그리드',
+          builder: (_) => CaptureVariantC(roll: widget.roll),
+        ),
+      ],
+    );
+  }
+
+  // ignore: unused_element
+  Widget _originalBuild(BuildContext context) {
     final rollState = ref.watch(
       rollProvider(RollFilter(rollId: widget.roll.id)),
     );

@@ -5,6 +5,8 @@ import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_roll_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
+import 'package:record_of_life/prototype/add_roll_variants.dart';
+import 'package:record_of_life/prototype/prototype_switcher.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
 import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
 import 'package:record_of_life/shared/widgets/dialogs/camera_selection_dialog.dart';
@@ -51,6 +53,28 @@ class _AddRollPageState extends ConsumerState<AddRollPage> {
 
   @override
   Widget build(BuildContext context) {
+    // PROTOTYPE swap — 3 variants of AddRoll. ← → 또는 하단 pill로 순회.
+    // 편집 모드는 baseline 스코프 밖 (필요 시 변형에 추가).
+    return PrototypeScaffold(
+      variants: [
+        (
+          label: '스텝 위저드',
+          builder: (_) => AddRollVariantA(roll: widget.roll),
+        ),
+        (
+          label: 'Pictogram',
+          builder: (_) => AddRollVariantB(roll: widget.roll),
+        ),
+        (
+          label: 'Accordion',
+          builder: (_) => AddRollVariantC(roll: widget.roll),
+        ),
+      ],
+    );
+  }
+
+  // ignore: unused_element
+  Widget _originalBuild(BuildContext context) {
     final roll = widget.roll;
     final rollFormState = ref.watch(newRollFormProvider(roll));
     final isEditMode = roll != null;
