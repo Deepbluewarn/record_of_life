@@ -10,17 +10,34 @@ import 'package:record_of_life/features/roll/presentation/providers/forms/new_sh
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
-import 'package:record_of_life/shared/widgets/app_bar.dart';
+import 'package:record_of_life/features/roll/presentation/widgets/roll_shots_timeline.dart';
 import 'package:record_of_life/shared/widgets/roll_card.dart';
-import 'package:record_of_life/shared/widgets/shot_card.dart';
+import 'package:record_of_life/shared/widgets/status_chips.dart';
+import 'package:record_of_life/shared/widgets/app_bar.dart';
 
-class RollDetailsPage extends ConsumerWidget {
+class RollDetailsPage extends ConsumerStatefulWidget {
   final Roll roll;
 
   const RollDetailsPage({super.key, required this.roll});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RollDetailsPage> createState() => _RollDetailsPageState();
+}
+
+class _RollDetailsPageState extends ConsumerState<RollDetailsPage> {
+  Roll get roll => widget.roll;
+
+  Future<void> _applyStatus(Roll currentRoll, RollStatus status) async {
+    await ref.read(rollProvider(null).notifier).updateRoll(currentRoll.copyWith(
+      status: status,
+      endedAt: status == RollStatus.completed
+          ? (currentRoll.endedAt ?? DateTime.now())
+          : currentRoll.endedAt,
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final shotState = ref.watch(shotProvider(roll.id));
     final rollState = ref.watch(rollProvider(RollFilter(rollId: roll.id)));
 
@@ -52,40 +69,6 @@ class RollDetailsPage extends ConsumerWidget {
               }
             },
           ),
-          PopupMenuButton<RollStatus>(
-            tooltip: '상태 변경',
-            icon: const Icon(Icons.flag_outlined),
-            onSelected: (status) async {
-              await ref
-                  .read(rollProvider(null).notifier)
-                  .updateRoll(currentRoll.copyWith(
-                    status: status,
-                    endedAt: status == RollStatus.completed
-                        ? (currentRoll.endedAt ?? DateTime.now())
-                        : currentRoll.endedAt,
-                  ));
-            },
-            itemBuilder: (context) => [
-              for (final s in RollStatus.values)
-                PopupMenuItem(
-                  value: s,
-                  enabled: s != currentRoll.status,
-                  child: Row(
-                    children: [
-                      Icon(
-                        s == currentRoll.status
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_off,
-                        size: 18,
-                        color: s.displayColor,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(s.displayName(context)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
           IconButton(
             icon: Icon(Icons.edit),
             onPressed: () => Navigator.push(
@@ -104,7 +87,7 @@ class RollDetailsPage extends ConsumerWidget {
                 builder: (context) => AlertDialog(
                   title: const Text('롤 삭제'),
                   content: const Text(
-                    '이 롤과 관련된 모든 샷이 영구적으로 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.',
+                    '이 롤과 관련된 모든 사진이 영구적으로 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.',
                   ),
                   actions: [
                     TextButton(
@@ -143,45 +126,26 @@ class RollDetailsPage extends ConsumerWidget {
               tag: roll.id,
               child: Material(
                 color: Colors.transparent,
-                child: RollCard(roll: roll),
+                child: RollCard(roll: currentRoll),
               ),
             ),
-            const SizedBox(height: 10),
+            StatusChips(
+              current: currentRoll.status,
+              onPick: (s) => _applyStatus(currentRoll, s),
+            ),
             const Divider(),
             Expanded(
               child: shotState.when(
-                data: (shotData) {
-                  return ListView.separated(
-                    itemCount: shotData.shots.length,
-                    itemBuilder: (context, idx) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PictureDetailPage(
-                                shot: shotData.shots[idx],
-                                rollId: roll.id,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Hero(
-                          tag: shotData.shots[idx].id,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: ShotCard(
-                              shot: shotData.shots[idx],
-                              index: idx,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    separatorBuilder: (context, idx) =>
-                        const SizedBox(height: 8),
-                  );
-                },
+                data: (shotData) => RollShotsTimeline(
+                  shots: shotData.shots,
+                  onTap: (shot, idx) => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          PictureDetailPage(shot: shot, rollId: roll.id),
+                    ),
+                  ),
+                ),
                 loading: () => Center(child: CircularProgressIndicator()),
                 error: (error, stack) => Text('Error: $error'),
               ),
@@ -193,34 +157,44 @@ class RollDetailsPage extends ConsumerWidget {
                 onPressed: currentRoll.status == RollStatus.archived
                     ? null
                     : () async {
-                        final formNotifier = ref.read(
-                          newShotFormProvider(null).notifier,
+                        // autoDispose provider를 await 사이 살려두기.
+                        final link = ref.listenManual(
+                          newShotFormProvider(null),
+                          (_, __) {},
                         );
-                        formNotifier.reset();
-                        // 마지막 샷 값을 default로 (idx 최대). 없으면 롤 defaultLensId만.
-                        final shots = await ref
-                            .read(shotRepositoryProvider)
-                            .getShotsByRollId(currentRoll.id);
-                        if (shots.isNotEmpty) {
-                          shots.sort((a, b) => b.idx.compareTo(a.idx));
-                          final last = shots.first;
-                          formNotifier
-                            ..setLensId(last.lensId ?? currentRoll.defaultLensId)
-                            ..setAperture(last.aperture)
-                            ..setShutterSpeed(last.shutterSpeed)
-                            ..setExposureComp(last.exposureComp)
-                            ..setIso(last.iso);
-                        } else if (currentRoll.defaultLensId != null) {
-                          formNotifier.setLensId(currentRoll.defaultLensId);
+                        try {
+                          final formNotifier = ref.read(
+                            newShotFormProvider(null).notifier,
+                          );
+                          formNotifier.reset();
+                          final shots = await ref
+                              .read(shotRepositoryProvider)
+                              .getShotsByRollId(currentRoll.id);
+                          if (shots.isNotEmpty) {
+                            shots.sort((a, b) => b.idx.compareTo(a.idx));
+                            final last = shots.first;
+                            formNotifier
+                              ..setLensId(
+                                last.lensId ?? currentRoll.defaultLensId,
+                              )
+                              ..setAperture(last.aperture)
+                              ..setShutterSpeed(last.shutterSpeed)
+                              ..setExposureComp(last.exposureComp)
+                              ..setIso(last.iso);
+                          } else if (currentRoll.defaultLensId != null) {
+                            formNotifier.setLensId(currentRoll.defaultLensId);
+                          }
+                          if (!context.mounted) return;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  CaptureModePage(roll: currentRoll),
+                            ),
+                          );
+                        } finally {
+                          link.close();
                         }
-                        if (!context.mounted) return;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                CaptureModePage(roll: currentRoll),
-                          ),
-                        );
                       },
                 icon: const Icon(Icons.camera_alt),
                 label: Text(

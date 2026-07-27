@@ -37,7 +37,7 @@ class EquipmentSetupPage extends ConsumerWidget {
                 AppSpacing.lg,
               ),
               child: Text(
-                '자주 쓰는 것만 체크하세요. 롤·샷 추가 시 이 목록만 보입니다. '
+                '자주 쓰는 것만 체크하세요. 롤/사진 추가 시 이 목록만 보입니다. '
                 '없으면 "직접 추가"로.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -183,7 +183,7 @@ class _CameraCheck extends ConsumerWidget {
       controlAffinity: ListTileControlAffinity.leading,
       title: Text(camera.title),
       subtitle: Text(
-        '${camera.brand ?? ''}${camera.format != null ? ' · ${camera.format}' : ''}',
+        '${camera.brand ?? ''}${camera.format != null ? ', ${camera.format}' : ''}',
         style: const TextStyle(color: AppColors.inkMuted),
       ),
       onChanged: (v) async {
@@ -239,7 +239,7 @@ class _FilmCheck extends ConsumerWidget {
       controlAffinity: ListTileControlAffinity.leading,
       title: Text(film.name),
       subtitle: Text(
-        '${film.brand ?? ''}${film.iso != null ? ' · ISO ${film.iso}' : ''}',
+        '${film.brand ?? ''}${film.iso != null ? ', ISO ${film.iso}' : ''}',
         style: const TextStyle(color: AppColors.inkMuted),
       ),
       onChanged: (v) async {
@@ -300,7 +300,7 @@ class _LensCheck extends ConsumerWidget {
       controlAffinity: ListTileControlAffinity.leading,
       title: Text(lens.name),
       subtitle: Text(
-        parts.join(' · '),
+        parts.join(', '),
         style: const TextStyle(color: AppColors.inkMuted),
       ),
       onChanged: (v) async {

@@ -7,8 +7,8 @@ import 'package:record_of_life/features/roll/presentation/providers/forms/new_sh
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
 import 'package:record_of_life/features/settings/providers/settings_provider.dart';
+import 'package:record_of_life/features/roll/presentation/widgets/capture_form.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
-import 'package:record_of_life/shared/widgets/forms/shot_form.dart';
 
 // Sticky Capture Mode: 확인 시 저장 + 카운트 +1 + 화면 유지.
 // 뒤로가기만 탈출구. 참고 사진은 폼 내 첨부 필드에서 선택적으로 제공.
@@ -91,7 +91,7 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
         SnackBar(
           content: Text(
             justCompleted
-                ? '#$nextFrame 저장 · 롤 촬영 완료 🎞'
+                ? '#$nextFrame 저장, 롤 촬영 완료 🎞'
                 : '#$nextFrame 저장됨',
           ),
           duration: Duration(milliseconds: justCompleted ? 3200 : 1600),
@@ -123,7 +123,7 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
     final total = currentRoll.totalShots;
 
     return Scaffold(
-      appBar: AppBar(title: Text('입력 모드 · $nextFrame / $total')),
+      appBar: AppBar(title: Text('입력 모드 $nextFrame / $total')),
       body: SafeArea(
         child: Column(
           children: [
@@ -134,7 +134,7 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
-                child: ShotForm(),
+                child: const CaptureForm(),
               ),
             ),
             _ConfirmBar(
@@ -157,9 +157,9 @@ class _LocationHint extends StatelessWidget {
   Widget build(BuildContext context) {
     if (access == LocationAccess.granted) return const SizedBox.shrink();
     final msg = switch (access) {
-      LocationAccess.serviceDisabled => '위치 서비스 꺼짐 · 탭하여 설정 열기',
-      LocationAccess.permanentlyDenied => '위치 권한 영구 거부 · 탭하여 설정 열기',
-      LocationAccess.denied => 'GPS 미기록 · 탭하여 위치 권한 허용',
+      LocationAccess.serviceDisabled => '위치 서비스 꺼짐, 탭하여 설정 열기',
+      LocationAccess.permanentlyDenied => '위치 권한 영구 거부, 탭하여 설정 열기',
+      LocationAccess.denied => 'GPS 미기록, 탭하여 위치 권한 허용',
       LocationAccess.granted => '',
     };
     return InkWell(
@@ -209,7 +209,7 @@ class _ConfirmBar extends ConsumerWidget {
         child: ElevatedButton(
           onPressed: canSave ? onConfirm : null,
           child: Text(
-            '확인 · #$nextFrame 저장',
+            '확인, #$nextFrame 저장',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
         ),
