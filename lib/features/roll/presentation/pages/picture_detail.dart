@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
+import 'package:record_of_life/features/roll/presentation/widgets/capture_form.dart';
+import 'package:record_of_life/features/roll/presentation/widgets/picture_detail_body.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
-import 'package:record_of_life/shared/widgets/forms/shot_form.dart';
-import 'package:record_of_life/shared/widgets/shot_card.dart';
 
-class PictureDetailPage extends ConsumerWidget {
+class PictureDetailPage extends ConsumerStatefulWidget {
   final Shot shot;
   final String rollId;
 
@@ -18,9 +18,69 @@ class PictureDetailPage extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final formState = ref.watch(newShotFormProvider(shot));
+  ConsumerState<PictureDetailPage> createState() => _PictureDetailPageState();
+}
 
+class _PictureDetailPageState extends ConsumerState<PictureDetailPage> {
+  Shot get shot => widget.shot;
+  String get rollId => widget.rollId;
+
+  Future<void> _openEditSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                CaptureForm(shot: shot),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final form = ref.read(newShotFormProvider(shot));
+                      await ref
+                          .read(shotProvider(rollId).notifier)
+                          .updateShot(
+                            form.toShot(rollId: rollId, shotId: shot.id),
+                          );
+                      if (!ctx.mounted) return;
+                      Navigator.pop(ctx);
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('저장됨'),
+                          duration: Duration(seconds: 1),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      '저장',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'ROL',
@@ -28,55 +88,16 @@ class PictureDetailPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            tooltip: '샷 삭제',
+            tooltip: '사진 삭제',
             onPressed: () => _confirmDelete(context, ref),
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Hero(
-              tag: shot.id,
-              child: Material(
-                color: Colors.transparent,
-                child: ShotCard(shot: shot, index: shot.idx - 1),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: SingleChildScrollView(
-                child: ShotForm(shot: shot),
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () async {
-                  await ref
-                      .read(shotProvider(rollId).notifier)
-                      .updateShot(
-                        formState.toShot(rollId: rollId, shotId: shot.id),
-                      );
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('저장됨'),
-                      duration: Duration(seconds: 1),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                  Navigator.pop(context);
-                },
-                child: const Text(
-                  '저장',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
+      body: Hero(
+        tag: shot.id,
+        child: Material(
+          color: Colors.transparent,
+          child: PictureDetailBody(shot: shot, onOpenEdit: _openEditSheet),
         ),
       ),
     );
@@ -86,8 +107,8 @@ class PictureDetailPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('샷 삭제'),
-        content: Text('#${shot.idx} 샷 기록을 삭제합니다. 되돌릴 수 없습니다.'),
+        title: const Text('사진 삭제'),
+        content: Text('#${shot.idx} 사진 기록을 삭제합니다. 되돌릴 수 없습니다.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),

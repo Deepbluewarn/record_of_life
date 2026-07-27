@@ -65,7 +65,7 @@ class LensSelectionDialog extends ConsumerWidget {
                       if (lens.focalLength != null) '${lens.focalLength}mm',
                       if (lens.maxAperture != null) 'f/${lens.maxAperture}',
                       if (lens.mount != null) lens.mount,
-                    ].join(' · '),
+                    ].join(', '),
                     style: const TextStyle(color: AppColors.inkMuted),
                   ),
                   onTap: () async {

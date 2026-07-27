@@ -13,6 +13,7 @@ class WheelSelector<T> extends StatefulWidget {
   final ValueChanged<T> onSelected;
   // 라벨 → 대표 item. 지정 시 위쪽에 섹션 점프 칩 노출.
   final Map<String, T>? sections;
+  final double itemFontSize;
 
   const WheelSelector({
     super.key,
@@ -22,6 +23,7 @@ class WheelSelector<T> extends StatefulWidget {
     required this.labelBuilder,
     required this.onSelected,
     this.sections,
+    this.itemFontSize = 22,
   });
 
   @override
@@ -126,8 +128,8 @@ class _WheelSelectorState<T> extends State<WheelSelector<T>> {
                         child: Center(
                           child: Text(
                             widget.labelBuilder(widget.items[i]),
-                            style: const TextStyle(
-                              fontSize: 22,
+                            style: TextStyle(
+                              fontSize: widget.itemFontSize,
                               fontWeight: FontWeight.w700,
                               color: AppColors.ink,
                               letterSpacing: 0.2,

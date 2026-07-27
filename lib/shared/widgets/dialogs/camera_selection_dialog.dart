@@ -76,7 +76,7 @@ class CameraSelectionDialog extends ConsumerWidget {
                     ),
                   ),
                   subtitle: Text(
-                    '${camera.brand ?? 'Unknown'} · ${camera.format ?? ''}',
+                    '${camera.brand ?? 'Unknown'}, ${camera.format ?? ''}',
                     style: const TextStyle(color: AppColors.inkMuted),
                   ),
                   trailing: mismatched

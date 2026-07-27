@@ -75,7 +75,7 @@ class FilmSelectionDialog extends ConsumerWidget {
                     ),
                   ),
                   subtitle: Text(
-                    '${film.brand ?? 'Unknown'} · ${film.format ?? ''}',
+                    '${film.brand ?? 'Unknown'}, ${film.format ?? ''}',
                     style: const TextStyle(color: AppColors.inkMuted),
                   ),
                   trailing: mismatched

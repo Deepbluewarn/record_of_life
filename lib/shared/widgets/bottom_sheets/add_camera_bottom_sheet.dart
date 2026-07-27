@@ -125,7 +125,7 @@ class _AddCameraBottomSheetState extends ConsumerState<AddCameraBottomSheet> {
                 ref.read(newCameraFormProvider.notifier).setNotes(v),
             decoration: const InputDecoration(
               labelText: '메모 (선택)',
-              hintText: '카메라 상태·특이사항',
+              hintText: '카메라 상태/특이사항',
               alignLabelWithHint: true,
             ),
             maxLines: 3,

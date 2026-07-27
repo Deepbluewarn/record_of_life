@@ -28,8 +28,8 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xxl),
           _SectionTitle('내 장비'),
           _Tile(
-            title: '카메라 · 필름 · 렌즈 관리',
-            subtitle: '롤·샷 선택 목록에 노출할 소유 장비를 지정.',
+            title: '카메라, 필름, 렌즈 관리',
+            subtitle: '롤/사진 선택 목록에 노출할 소유 장비를 지정.',
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -51,8 +51,8 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xxl),
           _SectionTitle('데이터'),
           _Tile(
-            title: '기본 카메라·필름·렌즈 카탈로그 다시 채우기',
-            subtitle: '삭제된 시드도 다시 나타납니다. 소유(owned)·편집 값은 유지.',
+            title: '기본 카메라, 필름, 렌즈 카탈로그 다시 채우기',
+            subtitle: '삭제된 시드도 다시 나타납니다. 소유(owned), 편집 값은 유지.',
             onTap: () => _reseed(context, ref),
           ),
         ],

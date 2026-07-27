@@ -23,13 +23,14 @@ class NewShotFormState {
     this.lensId,
     this.aperture,
     this.shutterSpeed,
-    this.exposureComp,
+    ExposureComp? exposureComp,
     this.iso,
     this.focalLength,
     this.note,
     this.rating,
     this.imagePath,
-  }) : date = date ?? DateTime.now();
+  }) : date = date ?? DateTime.now(),
+       exposureComp = exposureComp ?? ExposureComp.zero;
 
   NewShotFormState copyWith({
     int? idx,

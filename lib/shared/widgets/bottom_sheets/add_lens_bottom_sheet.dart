@@ -128,7 +128,7 @@ class _AddLensBottomSheetState extends ConsumerState<AddLensBottomSheet> {
                 ref.read(newLensFormProvider.notifier).setNotes(v),
             decoration: const InputDecoration(
               labelText: '메모 (선택)',
-              hintText: '렌즈 특성·상태',
+              hintText: '렌즈 특성/상태',
               alignLabelWithHint: true,
             ),
             maxLines: 3,
