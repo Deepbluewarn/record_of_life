@@ -5,6 +5,7 @@ import 'package:record_of_life/data/settings_store.dart';
 import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/settings/pages/equipment_setup_page.dart';
+import 'package:record_of_life/features/settings/pages/lab_management_page.dart';
 import 'package:record_of_life/features/settings/providers/settings_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 import 'package:record_of_life/shared/widgets/app_bar.dart';
@@ -33,6 +34,17 @@ class SettingsPage extends ConsumerWidget {
               context,
               MaterialPageRoute(
                 builder: (_) => const EquipmentSetupPage(),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _Tile(
+            title: '현상소 관리',
+            subtitle: '자주 이용하는 필름 현상소를 등록.',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const LabManagementPage(),
               ),
             ),
           ),

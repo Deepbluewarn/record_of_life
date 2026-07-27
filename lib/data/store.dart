@@ -15,4 +15,5 @@ class AppStore {
   static final cameras = stringMapStoreFactory.store('cameras');
   static final films = stringMapStoreFactory.store('films');
   static final lenses = stringMapStoreFactory.store('lenses');
+  static final labs = stringMapStoreFactory.store('labs');
 }
