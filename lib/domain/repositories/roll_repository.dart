@@ -14,6 +14,9 @@ abstract class RollRepository {
     RollStatus? status,
     DateTime? startedAt,
     DateTime? endedAt,
+    String? labId,
+    DateTime? sentToLabAt,
+    DateTime? expectedReturnAt,
   });
   Future<bool> deleteRoll(String rollId);
   Future<void> incrementShotsDone(String rollId);

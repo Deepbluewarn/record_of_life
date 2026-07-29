@@ -20,6 +20,12 @@ class Roll {
   final DateTime? startedAt;
   final DateTime? endedAt;
 
+  // 현상소 연결. labId만 있으면 "이 현상소에 맡길 예정/맡김", sentToLabAt이
+  // 채워지면 실제 발송 완료. expectedReturnAt은 회수 예정일(사용자 입력).
+  final String? labId;
+  final DateTime? sentToLabAt;
+  final DateTime? expectedReturnAt;
+
   Roll({
     String? id,
     this.camera,
@@ -32,8 +38,11 @@ class Roll {
     RollStatus? status,
     DateTime? startedAt,
     this.endedAt,
+    this.labId,
+    this.sentToLabAt,
+    this.expectedReturnAt,
   }) : id = id ?? const Uuid().v4(),
-       status = status ?? RollStatus.inProgress,
+       status = status ?? RollStatus.planning,
        startedAt = startedAt ?? DateTime.now();
 
   // 카메라·필름 포맷 불일치 여부. UI에서 경고 배지용.
@@ -54,6 +63,9 @@ class Roll {
     RollStatus? status,
     DateTime? startedAt,
     DateTime? endedAt,
+    String? labId,
+    DateTime? sentToLabAt,
+    DateTime? expectedReturnAt,
   }) {
     return Roll(
       id: id,
@@ -67,6 +79,9 @@ class Roll {
       status: status ?? this.status,
       startedAt: startedAt ?? this.startedAt,
       endedAt: endedAt ?? this.endedAt,
+      labId: labId ?? this.labId,
+      sentToLabAt: sentToLabAt ?? this.sentToLabAt,
+      expectedReturnAt: expectedReturnAt ?? this.expectedReturnAt,
     );
   }
 
@@ -82,6 +97,9 @@ class Roll {
     'status': status.name,
     'startedAt': startedAt?.toIso8601String(),
     'endedAt': endedAt?.toIso8601String(),
+    'labId': labId,
+    'sentToLabAt': sentToLabAt?.toIso8601String(),
+    'expectedReturnAt': expectedReturnAt?.toIso8601String(),
   };
 
   factory Roll.fromMap(Map<String, Object?> m) => Roll(
@@ -99,7 +117,7 @@ class Roll {
     memo: m['memo'] as String?,
     status: RollStatus.values.firstWhere(
       (s) => s.name == m['status'],
-      orElse: () => RollStatus.inProgress,
+      orElse: () => RollStatus.planning,
     ),
     startedAt: m['startedAt'] == null
         ? null
@@ -107,6 +125,13 @@ class Roll {
     endedAt: m['endedAt'] == null
         ? null
         : DateTime.parse(m['endedAt'] as String),
+    labId: m['labId'] as String?,
+    sentToLabAt: m['sentToLabAt'] == null
+        ? null
+        : DateTime.parse(m['sentToLabAt'] as String),
+    expectedReturnAt: m['expectedReturnAt'] == null
+        ? null
+        : DateTime.parse(m['expectedReturnAt'] as String),
   );
 
   @override

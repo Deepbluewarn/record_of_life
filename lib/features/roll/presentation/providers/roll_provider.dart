@@ -108,6 +108,9 @@ class RollNotifier extends AsyncNotifier<RollState> {
       status: roll.status,
       startedAt: roll.startedAt,
       endedAt: roll.endedAt,
+      labId: roll.labId,
+      sentToLabAt: roll.sentToLabAt,
+      expectedReturnAt: roll.expectedReturnAt,
     );
 
     ref.invalidate(rollProvider);

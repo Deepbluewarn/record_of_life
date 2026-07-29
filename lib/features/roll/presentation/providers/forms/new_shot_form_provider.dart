@@ -15,7 +15,6 @@ class NewShotFormState {
   final int? focalLength;
   final String? note;
   final int? rating;
-  final String? imagePath;
 
   NewShotFormState({
     this.idx = 1,
@@ -28,7 +27,6 @@ class NewShotFormState {
     this.focalLength,
     this.note,
     this.rating,
-    this.imagePath,
   }) : date = date ?? DateTime.now(),
        exposureComp = exposureComp ?? ExposureComp.zero;
 
@@ -43,7 +41,6 @@ class NewShotFormState {
     int? focalLength,
     String? note,
     int? rating,
-    String? imagePath,
   }) {
     return NewShotFormState(
       idx: idx ?? this.idx,
@@ -56,7 +53,6 @@ class NewShotFormState {
       focalLength: focalLength ?? this.focalLength,
       note: note ?? this.note,
       rating: rating ?? this.rating,
-      imagePath: imagePath ?? this.imagePath,
     );
   }
 
@@ -74,7 +70,6 @@ class NewShotFormState {
       focalLength: focalLength,
       note: note,
       rating: rating,
-      imagePath: imagePath,
     );
   }
 
@@ -105,7 +100,6 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
         focalLength: _shot.focalLength,
         note: _shot.note,
         rating: _shot.rating,
-        imagePath: _shot.imagePath,
       );
     }
     return NewShotFormState();
@@ -124,8 +118,6 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
       state = state.copyWith(focalLength: focalLength);
   void setNote(String? note) => state = state.copyWith(note: note);
   void setRating(int? rating) => state = state.copyWith(rating: rating);
-  void setImagePath(String? imagePath) =>
-      state = state.copyWith(imagePath: imagePath);
 
   void reset() {
     state = NewShotFormState();

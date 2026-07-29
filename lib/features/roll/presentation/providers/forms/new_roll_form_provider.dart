@@ -15,6 +15,9 @@ class NewRollFormState {
   DateTime? startedAt = DateTime.now();
   final DateTime? endedAt;
   final RollStatus? status;
+  final String? labId;
+  final DateTime? sentToLabAt;
+  final DateTime? expectedReturnAt;
 
   NewRollFormState({
     this.camera,
@@ -27,6 +30,9 @@ class NewRollFormState {
     this.startedAt,
     this.endedAt,
     this.status,
+    this.labId,
+    this.sentToLabAt,
+    this.expectedReturnAt,
   });
 
   NewRollFormState copyWith({
@@ -40,6 +46,9 @@ class NewRollFormState {
     DateTime? startedAt,
     DateTime? endedAt,
     RollStatus? status,
+    String? labId,
+    DateTime? sentToLabAt,
+    DateTime? expectedReturnAt,
   }) {
     return NewRollFormState(
       camera: camera ?? this.camera,
@@ -52,6 +61,9 @@ class NewRollFormState {
       startedAt: startedAt ?? this.startedAt,
       endedAt: endedAt ?? this.endedAt,
       status: status ?? this.status,
+      labId: labId ?? this.labId,
+      sentToLabAt: sentToLabAt ?? this.sentToLabAt,
+      expectedReturnAt: expectedReturnAt ?? this.expectedReturnAt,
     );
   }
 
@@ -72,6 +84,9 @@ class NewRollFormState {
       startedAt: startedAt,
       endedAt: endedAt,
       status: status,
+      labId: labId,
+      sentToLabAt: sentToLabAt,
+      expectedReturnAt: expectedReturnAt,
     );
   }
 }
@@ -95,6 +110,9 @@ class NewRollFormNotifier extends Notifier<NewRollFormState> {
         startedAt: _roll.startedAt,
         endedAt: _roll.endedAt,
         status: _roll.status,
+        labId: _roll.labId,
+        sentToLabAt: _roll.sentToLabAt,
+        expectedReturnAt: _roll.expectedReturnAt,
       );
     }
 
@@ -140,6 +158,18 @@ class NewRollFormNotifier extends Notifier<NewRollFormState> {
 
   void setStatus(RollStatus status) {
     state = state.copyWith(status: status);
+  }
+
+  void setLabId(String? labId) {
+    state = state.copyWith(labId: labId);
+  }
+
+  void setSentToLabAt(DateTime? d) {
+    state = state.copyWith(sentToLabAt: d);
+  }
+
+  void setExpectedReturnAt(DateTime? d) {
+    state = state.copyWith(expectedReturnAt: d);
   }
 
   void reset() {

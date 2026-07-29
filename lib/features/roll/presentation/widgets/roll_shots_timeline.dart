@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
@@ -88,12 +87,6 @@ class RollShotsTimeline extends StatelessWidget {
                               width: 88,
                               height: 66,
                               color: const Color(0xFF1A0F08),
-                              child: s.imagePath != null
-                                  ? Image.file(
-                                      File(s.imagePath!),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
                             ),
                             Text(
                               '#${s.idx}',

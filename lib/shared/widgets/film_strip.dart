@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/domain/models/shot.dart';
@@ -54,10 +53,7 @@ class FilmStrip extends StatelessWidget {
                         padding: EdgeInsets.only(right: i == n - 1 ? 0 : gap),
                         child: _Frame(
                           index: i + 1,
-                          imagePath: shots
-                              .where((s) => s.idx == i + 1)
-                              .firstOrNull
-                              ?.imagePath,
+                          hasShot: shots.any((s) => s.idx == i + 1),
                           width: frameW,
                           height: frameH,
                         ),
@@ -118,35 +114,32 @@ class _SprocketBand extends StatelessWidget {
 
 class _Frame extends StatelessWidget {
   final int index;
-  final String? imagePath;
+  final bool hasShot;
   final double width;
   final double height;
   const _Frame({
     required this.index,
-    required this.imagePath,
+    required this.hasShot,
     required this.width,
     required this.height,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = imagePath != null;
     return SizedBox(
       width: width,
       height: height,
       child: Container(
-        color: hasImage ? _frameDark : _frameEmpty,
+        color: hasShot ? _frameDark : _frameEmpty,
         alignment: Alignment.center,
-        child: hasImage
-            ? Image.file(File(imagePath!), fit: BoxFit.cover)
-            : Text(
-                '$index',
-                style: const TextStyle(
-                  color: _emptyInk,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                ),
-              ),
+        child: Text(
+          '$index',
+          style: TextStyle(
+            color: hasShot ? _hole : _emptyInk,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
+        ),
       ),
     );
   }

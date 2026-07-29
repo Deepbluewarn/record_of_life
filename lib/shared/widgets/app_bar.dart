@@ -6,12 +6,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final String? subtitle;
   final List<Widget> actions;
+  // 페이지가 액션 오버플로에 설정 항목을 직접 넣는 경우 false로 자동 아이콘을 끔.
+  final bool showSettings;
 
   CustomAppBar({
     super.key,
     required this.title,
     this.subtitle,
     List<Widget>? actions,
+    this.showSettings = true,
   }) : actions = actions ?? [];
 
   @override
@@ -53,14 +56,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         ...actions,
-        IconButton(
-          icon: const Icon(Icons.settings_outlined),
-          tooltip: '설정',
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SettingsPage()),
+        if (showSettings)
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: '설정',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            ),
           ),
-        ),
       ],
     );
   }

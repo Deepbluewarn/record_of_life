@@ -50,6 +50,14 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
       (state.value ?? const AppSettings()).copyWith(equipmentReady: value),
     );
   }
+
+  Future<void> resetOnboarding() async {
+    await ref.read(settingsStoreProvider).put({
+      'handedness': null,
+      'equipmentReady': false,
+    });
+    state = const AsyncData(AppSettings());
+  }
 }
 
 final settingsProvider =

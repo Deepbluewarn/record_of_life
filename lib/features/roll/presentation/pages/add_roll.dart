@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:record_of_life/domain/enums/roll_status.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_roll_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/lens_provider.dart';
@@ -12,7 +11,6 @@ import 'package:record_of_life/shared/widgets/date_picker_field.dart';
 import 'package:record_of_life/shared/widgets/dialogs/camera_selection_dialog.dart';
 import 'package:record_of_life/shared/widgets/dialogs/film_selection_dialog.dart';
 import 'package:record_of_life/shared/widgets/dialogs/lens_selection_dialog.dart';
-import 'package:record_of_life/shared/widgets/selectable_button.dart';
 import 'package:record_of_life/shared/widgets/simple_text_field.dart';
 
 class AddRollPage extends ConsumerStatefulWidget {
@@ -180,24 +178,8 @@ class _AddRollPageState extends ConsumerState<AddRollPage> {
               ),
             ),
 
-            // 편집 모드에서만 상태 선택 노출.
-            if (isEditMode) ...[
-              const SizedBox(height: AppSpacing.xl),
-              Text('상태', style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  for (final s in RollStatus.values)
-                    SelectableButton(
-                      label: s.displayName(context),
-                      selected: form.status == s,
-                      onTap: () => n.setStatus(s),
-                    ),
-                ],
-              ),
-            ],
+            // 상태·현상소는 편집 폼에서 조작하지 않음.
+            // 상태 전이는 롤 상세의 정방향 액션으로만.
 
             const SizedBox(height: AppSpacing.xl),
             SizedBox(

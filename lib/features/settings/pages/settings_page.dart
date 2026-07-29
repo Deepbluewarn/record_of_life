@@ -19,7 +19,7 @@ class SettingsPage extends ConsumerWidget {
     final handedness = settings.value?.handedness;
 
     return Scaffold(
-      appBar: CustomAppBar(title: 'ROL', subtitle: '설정'),
+      appBar: CustomAppBar(title: 'ROL', subtitle: '설정', showSettings: false),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
@@ -54,6 +54,17 @@ class SettingsPage extends ConsumerWidget {
             title: '기본 카메라, 필름, 렌즈 카탈로그 다시 채우기',
             subtitle: '삭제된 시드도 다시 나타납니다. 소유(owned), 편집 값은 유지.',
             onTap: () => _reseed(context, ref),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _Tile(
+            title: '온보딩 다시 보기',
+            subtitle: '손잡이·장비 등록 초기 화면을 다시 표시합니다.',
+            onTap: () async {
+              await ref.read(settingsProvider.notifier).resetOnboarding();
+              if (!context.mounted) return;
+              // 온보딩 게이트가 다시 열리도록 최상위까지 pop.
+              Navigator.of(context).popUntil((r) => r.isFirst);
+            },
           ),
         ],
       ),

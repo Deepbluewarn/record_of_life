@@ -1,13 +1,15 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record_of_life/data/seeds.dart';
 import 'package:record_of_life/data/settings_store.dart';
 import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/features/roll/presentation/pages/home_page.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
-import 'package:record_of_life/features/settings/pages/equipment_setup_page.dart';
 import 'package:record_of_life/features/settings/pages/handedness_onboarding.dart';
+import 'package:record_of_life/features/settings/pages/onboarding_equipment_page.dart';
 import 'package:record_of_life/features/settings/providers/settings_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 
@@ -30,6 +32,16 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: AppTheme.lightTheme,
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.trackpad,
+          PointerDeviceKind.stylus,
+        },
+      ),
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [Locale('ko'), Locale('en')],
       builder: (context, child) {
         return Center(
           child: ConstrainedBox(
@@ -56,7 +68,7 @@ class _Root extends ConsumerWidget {
       data: (s) {
         if (s.handedness == null) return const HandednessOnboardingPage();
         if (!s.equipmentReady) {
-          return const EquipmentSetupPage(isOnboarding: true);
+          return const OnboardingEquipmentPage();
         }
         return const HomePage();
       },

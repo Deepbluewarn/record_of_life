@@ -6,12 +6,10 @@ import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/roll_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
-import 'package:record_of_life/features/settings/providers/settings_provider.dart';
 import 'package:record_of_life/features/roll/presentation/widgets/capture_form.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
 
-// Sticky Capture Mode: 확인 시 저장 + 카운트 +1 + 화면 유지.
-// 뒤로가기만 탈출구. 참고 사진은 폼 내 첨부 필드에서 선택적으로 제공.
+// 저장 → 롤 상세로 복귀. 연속 저장은 위젯 등으로 별도 검토.
 class CaptureModePage extends ConsumerStatefulWidget {
   final Roll roll;
   const CaptureModePage({super.key, required this.roll});
@@ -67,7 +65,11 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
       if (ok != true || !mounted) return;
     }
 
-    final pos = await tryGetPosition();
+    // 권한 없는 상태에서 tryGetPosition을 부르면 웹에서 프롬프트 후 hang 가능.
+    // _locationAccess가 granted일 때만 호출.
+    final pos = _locationAccess == LocationAccess.granted
+        ? await tryGetPosition()
+        : null;
     final shot = form.toShot(rollId: currentRoll.id).copyWith(
       idx: nextFrame,
       gpsLat: pos?.lat,
@@ -75,37 +77,9 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
     );
 
     await ref.read(shotProvider(currentRoll.id).notifier).addShot(shot);
-    ref.read(newShotFormProvider(null).notifier).resetForNextShot();
+    ref.read(newShotFormProvider(null).notifier).reset();
     HapticFeedback.mediumImpact();
-
-    if (!mounted) return;
-    final justCompleted = nextFrame == currentRoll.totalShots;
-    final handedness = ref.read(settingsProvider).value?.handedness;
-    final width = MediaQuery.of(context).size.width;
-    final margin = handedness == Handedness.left
-        ? EdgeInsets.only(left: 16, right: width * 0.35, bottom: 16)
-        : EdgeInsets.only(left: width * 0.35, right: 16, bottom: 16);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            justCompleted
-                ? '#$nextFrame 저장, 롤 촬영 완료 🎞'
-                : '#$nextFrame 저장됨',
-          ),
-          duration: Duration(milliseconds: justCompleted ? 3200 : 1600),
-          behavior: SnackBarBehavior.floating,
-          margin: margin,
-          action: SnackBarAction(
-            label: '확인',
-            textColor: Colors.white,
-            onPressed: () {
-              if (mounted) Navigator.pop(context);
-            },
-          ),
-        ),
-      );
+    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -123,7 +97,7 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
     final total = currentRoll.totalShots;
 
     return Scaffold(
-      appBar: AppBar(title: Text('입력 모드 $nextFrame / $total')),
+      appBar: AppBar(title: Text('사진 추가 $nextFrame / $total')),
       body: SafeArea(
         child: Column(
           children: [

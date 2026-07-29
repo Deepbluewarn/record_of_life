@@ -54,6 +54,9 @@ class RollRepositoryImpl extends RollRepository {
     RollStatus? status,
     DateTime? startedAt,
     DateTime? endedAt,
+    String? labId,
+    DateTime? sentToLabAt,
+    DateTime? expectedReturnAt,
   }) async {
     final snap = await AppStore.rolls.record(rollId).getSnapshot(_store.db);
     if (snap == null) return;
@@ -66,6 +69,9 @@ class RollRepositoryImpl extends RollRepository {
       status: status,
       startedAt: startedAt,
       endedAt: endedAt,
+      labId: labId,
+      sentToLabAt: sentToLabAt,
+      expectedReturnAt: expectedReturnAt,
     );
     await AppStore.rolls.record(rollId).put(_store.db, updated.toMap());
   }
@@ -77,24 +83,14 @@ class RollRepositoryImpl extends RollRepository {
       if (snap == null) return;
       final current = Roll.fromMap(Map<String, Object?>.from(snap.value));
       final next = current.shotsDone + 1;
-      // 필름 실물처럼 max를 초과할 수 있음(37/38번째 컷 등).
-      // 초과 시 auto-complete는 이미 지났으므로 상태 변경 없음.
-      RollStatus? nextStatus;
-      DateTime? nextEndedAt;
-      if (next == current.totalShots &&
-          current.status != RollStatus.archived) {
-        nextStatus = RollStatus.completed;
-        nextEndedAt = DateTime.now();
-      } else if (current.status == RollStatus.planning) {
-        nextStatus = RollStatus.inProgress;
-      }
+      // 첫 사진 추가 시 planning → inProgress. 그 외 자동 전이 없음
+      // (현상중/보관 전이는 명시적 버튼으로만).
+      final nextStatus = current.status == RollStatus.planning
+          ? RollStatus.inProgress
+          : null;
       await AppStore.rolls.record(rollId).put(
         txn,
-        current.copyWith(
-          shotsDone: next,
-          status: nextStatus,
-          endedAt: nextEndedAt,
-        ).toMap(),
+        current.copyWith(shotsDone: next, status: nextStatus).toMap(),
       );
     });
   }

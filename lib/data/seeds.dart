@@ -29,7 +29,7 @@ class Seeds {
   }
 
   static final _cameras = [
-    Camera(title: 'Canon AE-1', brand: 'Canon', format: '35mm', mount: 'FD'),
+    Camera(title: 'Canon AE-1', brand: 'Canon', format: '35mm', mount: 'FD', owned: true),
     Camera(title: 'Canon AE-1 Program', brand: 'Canon', format: '35mm', mount: 'FD'),
     Camera(title: 'Canon A-1', brand: 'Canon', format: '35mm', mount: 'FD'),
     Camera(title: 'Canon F-1', brand: 'Canon', format: '35mm', mount: 'FD'),
@@ -63,7 +63,7 @@ class Seeds {
 
   static final _films = [
     Film(name: 'Kodak Portra 160', brand: 'Kodak', iso: 160, format: '35mm', defaultShots: 36),
-    Film(name: 'Kodak Portra 400', brand: 'Kodak', iso: 400, format: '35mm', defaultShots: 36),
+    Film(name: 'Kodak Portra 400', brand: 'Kodak', iso: 400, format: '35mm', defaultShots: 36, owned: true),
     Film(name: 'Kodak Portra 800', brand: 'Kodak', iso: 800, format: '35mm', defaultShots: 36),
     Film(name: 'Kodak Ektar 100', brand: 'Kodak', iso: 100, format: '35mm', defaultShots: 36),
     Film(name: 'Kodak Gold 200', brand: 'Kodak', iso: 200, format: '35mm', defaultShots: 36),
@@ -91,7 +91,7 @@ class Seeds {
 
   static final _lenses = [
     // Canon FD
-    Lens(name: 'Canon FD 50mm f/1.4', brand: 'Canon', focalLength: 50, maxAperture: 1.4, mount: 'FD', type: 'Prime'),
+    Lens(name: 'Canon FD 50mm f/1.4', brand: 'Canon', focalLength: 50, maxAperture: 1.4, mount: 'FD', type: 'Prime', owned: true),
     Lens(name: 'Canon FD 50mm f/1.8', brand: 'Canon', focalLength: 50, maxAperture: 1.8, mount: 'FD', type: 'Prime'),
     Lens(name: 'Canon FD 35mm f/2.8', brand: 'Canon', focalLength: 35, maxAperture: 2.8, mount: 'FD', type: 'Prime'),
     Lens(name: 'Canon FD 85mm f/1.8', brand: 'Canon', focalLength: 85, maxAperture: 1.8, mount: 'FD', type: 'Prime'),

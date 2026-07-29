@@ -18,7 +18,6 @@ class Shot {
   final double? gpsLng;
   final String? note;
   final int? rating;
-  final String? imagePath;
 
   Shot({
     String? id,
@@ -35,7 +34,6 @@ class Shot {
     this.gpsLng,
     this.note,
     this.rating,
-    this.imagePath,
   }) : id = id ?? const Uuid().v4();
 
   Shot copyWith({
@@ -51,7 +49,6 @@ class Shot {
     double? gpsLng,
     String? note,
     int? rating,
-    String? imagePath,
   }) {
     return Shot(
       id: id,
@@ -68,7 +65,6 @@ class Shot {
       gpsLng: gpsLng ?? this.gpsLng,
       note: note ?? this.note,
       rating: rating ?? this.rating,
-      imagePath: imagePath ?? this.imagePath,
     );
   }
 
@@ -87,7 +83,6 @@ class Shot {
     'gpsLng': gpsLng,
     'note': note,
     'rating': rating,
-    'imagePath': imagePath,
   };
 
   factory Shot.fromMap(Map<String, Object?> m) => Shot(
@@ -105,7 +100,6 @@ class Shot {
     gpsLng: (m['gpsLng'] as num?)?.toDouble(),
     note: m['note'] as String?,
     rating: m['rating'] as int?,
-    imagePath: m['imagePath'] as String?,
   );
 }
 

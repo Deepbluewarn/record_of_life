@@ -1,10 +1,7 @@
 // 사진 입력(capture) 폼 — Dial cluster 확정.
 // 조리개·셔터·EV·ISO를 2×2 다이얼(WheelSelector). 렌즈·날짜 위, 옵션 접기 아래.
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:record_of_life/domain/enums/aperture.dart';
 import 'package:record_of_life/domain/enums/exposure_comp.dart';
 import 'package:record_of_life/domain/enums/shutter_speed.dart';
@@ -232,11 +229,6 @@ class _OptionsFoldState extends State<_OptionsFold> {
             onSelect: widget.n.setRating,
           ),
           const SizedBox(height: 14),
-          _RefPhoto(
-            imagePath: widget.form.imagePath,
-            onPicked: widget.n.setImagePath,
-          ),
-          const SizedBox(height: 14),
           TextField(
             onChanged: widget.n.setNote,
             decoration: const InputDecoration(hintText: '사진에 대한 메모'),
@@ -273,51 +265,3 @@ class _RatingRow extends StatelessWidget {
   }
 }
 
-class _RefPhoto extends StatelessWidget {
-  final String? imagePath;
-  final ValueChanged<String> onPicked;
-  const _RefPhoto({required this.imagePath, required this.onPicked});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: imagePath != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: Image.file(File(imagePath!), fit: BoxFit.cover),
-                )
-              : const Icon(Icons.image_outlined, size: 20),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.add_photo_alternate_outlined, size: 16),
-            label: const Text('참고 사진'),
-            onPressed: () async {
-              final picker = ImagePicker();
-              final img = await picker.pickImage(source: ImageSource.gallery);
-              if (img != null) {
-                final dir = await getApplicationDocumentsDirectory();
-                final path =
-                    '${dir.path}/images/${DateTime.now().millisecondsSinceEpoch}_${img.name}';
-                final file = File(path);
-                await file.parent.create(recursive: true);
-                await img.saveTo(path);
-                onPicked(path);
-              }
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/features/roll/presentation/providers/forms/new_shot_form_provider.dart';
 import 'package:record_of_life/features/roll/presentation/providers/shot_provider.dart';
@@ -9,12 +10,12 @@ import 'package:record_of_life/shared/widgets/app_bar.dart';
 
 class PictureDetailPage extends ConsumerStatefulWidget {
   final Shot shot;
-  final String rollId;
+  final Roll roll;
 
   const PictureDetailPage({
     super.key,
     required this.shot,
-    required this.rollId,
+    required this.roll,
   });
 
   @override
@@ -22,8 +23,17 @@ class PictureDetailPage extends ConsumerStatefulWidget {
 }
 
 class _PictureDetailPageState extends ConsumerState<PictureDetailPage> {
-  Shot get shot => widget.shot;
-  String get rollId => widget.rollId;
+  // 화면에 뿌리는 shot은 provider의 최신값. 초기값은 widget.shot으로 즉시 표시.
+  Shot get shot {
+    final list = ref.watch(shotProvider(rollId)).value?.shots;
+    return list?.firstWhere(
+          (s) => s.id == widget.shot.id,
+          orElse: () => widget.shot,
+        ) ??
+        widget.shot;
+  }
+
+  String get rollId => widget.roll.id;
 
   Future<void> _openEditSheet() async {
     await showModalBottomSheet<void>(
@@ -97,7 +107,11 @@ class _PictureDetailPageState extends ConsumerState<PictureDetailPage> {
         tag: shot.id,
         child: Material(
           color: Colors.transparent,
-          child: PictureDetailBody(shot: shot, onOpenEdit: _openEditSheet),
+          child: PictureDetailBody(
+            shot: shot,
+            roll: widget.roll,
+            onOpenEdit: _openEditSheet,
+          ),
         ),
       ),
     );
