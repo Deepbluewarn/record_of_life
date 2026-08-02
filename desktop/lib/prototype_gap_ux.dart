@@ -129,34 +129,24 @@ class VariantA extends StatelessWidget {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (_, i) {
         final matched = ctx.isMatched(i);
-        final rowColor = matched
-            ? null
-            : Theme.of(context).colorScheme.surfaceContainerLow;
         return Container(
-          color: rowColor,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 스킵 표시 노란 stripe.
-              Container(
+          decoration: BoxDecoration(
+            color: matched
+                ? null
+                : Theme.of(context).colorScheme.surfaceContainerLow,
+            border: Border(
+              left: BorderSide(
                 width: 4,
-                color: matched
-                    ? Colors.transparent
-                    : Colors.amber.shade600,
+                color: matched ? Colors.transparent : Colors.amber.shade600,
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(child: _shotCell(context, i)),
-                      const SizedBox(width: 16),
-                      Expanded(child: _fileCell(context, i)),
-                    ],
-                  ),
-                ),
-              ),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: Row(
+            children: [
+              Expanded(child: _shotCell(context, i)),
+              const SizedBox(width: 16),
+              Expanded(child: _fileCell(context, i)),
             ],
           ),
         );
