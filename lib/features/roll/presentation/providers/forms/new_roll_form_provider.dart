@@ -18,6 +18,7 @@ class NewRollFormState {
   final String? labId;
   final DateTime? sentToLabAt;
   final DateTime? expectedReturnAt;
+  final int? pushPull;
 
   NewRollFormState({
     this.camera,
@@ -33,6 +34,7 @@ class NewRollFormState {
     this.labId,
     this.sentToLabAt,
     this.expectedReturnAt,
+    this.pushPull,
   });
 
   NewRollFormState copyWith({
@@ -49,6 +51,7 @@ class NewRollFormState {
     String? labId,
     DateTime? sentToLabAt,
     DateTime? expectedReturnAt,
+    int? pushPull,
   }) {
     return NewRollFormState(
       camera: camera ?? this.camera,
@@ -64,6 +67,7 @@ class NewRollFormState {
       labId: labId ?? this.labId,
       sentToLabAt: sentToLabAt ?? this.sentToLabAt,
       expectedReturnAt: expectedReturnAt ?? this.expectedReturnAt,
+      pushPull: pushPull ?? this.pushPull,
     );
   }
 
@@ -87,6 +91,7 @@ class NewRollFormState {
       labId: labId,
       sentToLabAt: sentToLabAt,
       expectedReturnAt: expectedReturnAt,
+      pushPull: pushPull,
     );
   }
 }
@@ -113,6 +118,7 @@ class NewRollFormNotifier extends Notifier<NewRollFormState> {
         labId: _roll.labId,
         sentToLabAt: _roll.sentToLabAt,
         expectedReturnAt: _roll.expectedReturnAt,
+        pushPull: _roll.pushPull,
       );
     }
 
@@ -170,6 +176,10 @@ class NewRollFormNotifier extends Notifier<NewRollFormState> {
 
   void setExpectedReturnAt(DateTime? d) {
     state = state.copyWith(expectedReturnAt: d);
+  }
+
+  void setPushPull(int? v) {
+    state = state.copyWith(pushPull: v);
   }
 
   void reset() {

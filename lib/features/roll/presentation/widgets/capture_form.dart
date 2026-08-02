@@ -212,56 +212,159 @@ class _OptionsFoldState extends State<_OptionsFold> {
             ),
           ),
         ),
-        if (_open) ...[
-          const SizedBox(height: 14),
-          TextFormField(
-            initialValue: widget.form.focalLength?.toString(),
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: '초점거리 (mm)',
-              hintText: '렌즈 값 상속',
+        if (_open)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+          const SizedBox(height: 8),
+          _row(
+            '플래시',
+            Align(
+              alignment: Alignment.centerRight,
+              child: _togglePill(
+                Icons.flash_on,
+                '플래시',
+                widget.form.flash == true,
+                () => widget.n
+                    .setFlash(widget.form.flash == true ? null : true),
+              ),
             ),
-            onChanged: (v) => widget.n.setFocalLength(int.tryParse(v)),
           ),
-          const SizedBox(height: 14),
-          _RatingRow(
-            rating: widget.form.rating,
-            onSelect: widget.n.setRating,
+          _row(
+            '초점거리',
+            _textField(
+              hint: '렌즈 값 상속 (mm)',
+              value: widget.form.focalLength?.toString(),
+              keyboard: TextInputType.number,
+              onChanged: (v) => widget.n.setFocalLength(int.tryParse(v)),
+            ),
           ),
-          const SizedBox(height: 14),
-          TextField(
-            onChanged: widget.n.setNote,
-            decoration: const InputDecoration(hintText: '사진에 대한 메모'),
-            maxLines: 2,
+          _row(
+            '평점',
+            _StarPicker(
+              rating: widget.form.rating,
+              onSelect: widget.n.setRating,
+            ),
           ),
-        ],
+          _row(
+            '메모',
+            _textField(
+              hint: '이 사진에 대한 메모',
+              value: null,
+              onChanged: widget.n.setNote,
+              maxLines: null,
+            ),
+            last: true,
+          ),
+            ],
+          ),
       ],
     );
   }
 }
 
-class _RatingRow extends StatelessWidget {
+class _StarPicker extends StatelessWidget {
   final int? rating;
   final ValueChanged<int> onSelect;
-  const _RatingRow({required this.rating, required this.onSelect});
+  const _StarPicker({required this.rating, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.end,
       children: List.generate(5, (i) {
         final star = i + 1;
         final on = rating != null && star <= rating!;
-        return IconButton(
-          icon: Icon(
-            on ? Icons.star : Icons.star_border,
-            color: on ? AppColors.ink : AppColors.border,
-            size: 26,
+        return GestureDetector(
+          onTap: () => onSelect(star),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: Icon(
+              on ? Icons.star : Icons.star_border,
+              size: 22,
+              color: on ? AppColors.ink : AppColors.border,
+            ),
           ),
-          onPressed: () => onSelect(star),
         );
       }),
     );
   }
+}
+
+Widget _row(String label, Widget child, {bool last = false}) => Column(
+  crossAxisAlignment: CrossAxisAlignment.stretch,
+  children: [
+    Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 88,
+            child: Text(
+              label,
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    ),
+    if (!last) const Divider(height: 1),
+  ],
+);
+
+Widget _textField({
+  required String hint,
+  required String? value,
+  required ValueChanged<String> onChanged,
+  TextInputType? keyboard,
+  int? maxLines = 1,
+}) {
+  return TextFormField(
+    initialValue: value,
+    keyboardType: keyboard,
+    maxLines: maxLines,
+    style: const TextStyle(fontSize: 14),
+    decoration: InputDecoration(
+      border: InputBorder.none,
+      isDense: true,
+      hintText: hint,
+      hintStyle: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+    ),
+    onChanged: onChanged,
+  );
+}
+
+Widget _togglePill(IconData icon, String label, bool on, VoidCallback onTap) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(999),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: on ? AppColors.ink : Colors.transparent,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon,
+              size: 14, color: on ? Colors.white : AppColors.inkMuted),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: on ? Colors.white : AppColors.ink,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 

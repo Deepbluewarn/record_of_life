@@ -15,6 +15,9 @@ class NewShotFormState {
   final int? focalLength;
   final String? note;
   final int? rating;
+  final bool? flash;
+  final String? filter;
+  final bool? tripod;
 
   NewShotFormState({
     this.idx = 1,
@@ -27,6 +30,9 @@ class NewShotFormState {
     this.focalLength,
     this.note,
     this.rating,
+    this.flash,
+    this.filter,
+    this.tripod,
   }) : date = date ?? DateTime.now(),
        exposureComp = exposureComp ?? ExposureComp.zero;
 
@@ -41,6 +47,9 @@ class NewShotFormState {
     int? focalLength,
     String? note,
     int? rating,
+    bool? flash,
+    String? filter,
+    bool? tripod,
   }) {
     return NewShotFormState(
       idx: idx ?? this.idx,
@@ -53,6 +62,9 @@ class NewShotFormState {
       focalLength: focalLength ?? this.focalLength,
       note: note ?? this.note,
       rating: rating ?? this.rating,
+      flash: flash ?? this.flash,
+      filter: filter ?? this.filter,
+      tripod: tripod ?? this.tripod,
     );
   }
 
@@ -70,6 +82,9 @@ class NewShotFormState {
       focalLength: focalLength,
       note: note,
       rating: rating,
+      flash: flash,
+      filter: filter,
+      tripod: tripod,
     );
   }
 
@@ -100,6 +115,9 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
         focalLength: _shot.focalLength,
         note: _shot.note,
         rating: _shot.rating,
+        flash: _shot.flash,
+        filter: _shot.filter,
+        tripod: _shot.tripod,
       );
     }
     return NewShotFormState();
@@ -118,6 +136,9 @@ class NewShotFormNotifier extends Notifier<NewShotFormState> {
       state = state.copyWith(focalLength: focalLength);
   void setNote(String? note) => state = state.copyWith(note: note);
   void setRating(int? rating) => state = state.copyWith(rating: rating);
+  void setFlash(bool? flash) => state = state.copyWith(flash: flash);
+  void setFilter(String? filter) => state = state.copyWith(filter: filter);
+  void setTripod(bool? tripod) => state = state.copyWith(tripod: tripod);
 
   void reset() {
     state = NewShotFormState();

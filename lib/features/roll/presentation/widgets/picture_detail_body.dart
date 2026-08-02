@@ -52,6 +52,10 @@ class PictureDetailBody extends ConsumerWidget {
           const SizedBox(height: 16),
         ],
         _ContextLine(roll: roll, lensName: lensName),
+        if (_hasExtras(shot)) ...[
+          const SizedBox(height: 12),
+          _ExtrasRow(shot: shot),
+        ],
         if (shot.note != null && shot.note!.isNotEmpty) ...[
           const SizedBox(height: 16),
           _NoteBox(text: shot.note!),
@@ -111,6 +115,45 @@ class _HeroLine extends StatelessWidget {
       ],
     );
   }
+}
+
+bool _hasExtras(Shot s) =>
+    s.flash == true ||
+    s.tripod == true ||
+    (s.filter != null && s.filter!.isNotEmpty);
+
+class _ExtrasRow extends StatelessWidget {
+  final Shot shot;
+  const _ExtrasRow({required this.shot});
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = <Widget>[
+      if (shot.flash == true) _extraChip(Icons.flash_on, '플래시'),
+      if (shot.tripod == true) _extraChip(Icons.camera, '삼각대'),
+      if (shot.filter != null && shot.filter!.isNotEmpty)
+        _extraChip(Icons.filter_alt_outlined, shot.filter!),
+    ];
+    return Wrap(spacing: 8, runSpacing: 8, children: chips);
+  }
+
+  Widget _extraChip(IconData icon, String label) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.inkMuted),
+        const SizedBox(width: 6),
+        Text(label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+      ],
+    ),
+  );
 }
 
 class _ContextLine extends StatelessWidget {
