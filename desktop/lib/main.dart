@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import 'exiftool.dart';
+import 'prototype_gap_ux.dart';
 import 'rol_json.dart';
 import 'sample.dart';
 
@@ -59,6 +60,9 @@ class _MainPageState extends State<MainPage> {
   // 리스트 길이 = 행 개수. 두 리스트는 항상 같은 길이.
   List<int?> _leftIdx = [];
   List<int?> _rightIdx = [];
+
+  // PROTOTYPE: 갭 표현 3안. throwaway.
+  PrototypeVariant _variant = PrototypeVariant.a;
 
   void _rebuildRows() {
     final shots = _rol?.roll.shots.length ?? 0;
@@ -214,10 +218,12 @@ class _MainPageState extends State<MainPage> {
             ),
         ],
       ),
-      body: DropTarget(
-        onDragDone: _onDrop,
-        child: loaded
-            ? _LoadedState(
+      body: Stack(
+        children: [
+          DropTarget(
+            onDragDone: _onDrop,
+            child: loaded
+                ? _LoadedState(
                 rol: _rol!,
                 scanDir: _scanDir!,
                 scanFiles: _scanFiles,
@@ -228,6 +234,7 @@ class _MainPageState extends State<MainPage> {
                 keepBackup: _keepBackup,
                 running: _running,
                 exiftoolOk: _exiftoolOk,
+                variant: _variant,
                 onReloadRol: _openRolFile,
                 onReloadDir: _openScanDir,
                 onApply: _apply,
@@ -237,15 +244,22 @@ class _MainPageState extends State<MainPage> {
                 onReverseRight: _reverseRight,
                 onInsertGap: _insertGap,
               )
-            : _EmptyState(
-                rol: _rol,
-                rolPath: _rolPath,
-                scanDir: _scanDir,
-                error: _error,
-                onOpenRol: _openRolFile,
-                onOpenDir: _openScanDir,
-                onLoadSample: _loadSample,
-              ),
+                : _EmptyState(
+                    rol: _rol,
+                    rolPath: _rolPath,
+                    scanDir: _scanDir,
+                    error: _error,
+                    onOpenRol: _openRolFile,
+                    onOpenDir: _openScanDir,
+                    onLoadSample: _loadSample,
+                  ),
+          ),
+          if (loaded)
+            PrototypeSwitcher(
+              current: _variant,
+              onChange: (v) => setState(() => _variant = v),
+            ),
+        ],
       ),
     );
   }
@@ -391,6 +405,7 @@ class _LoadedState extends StatelessWidget {
   final bool keepBackup;
   final bool running;
   final bool? exiftoolOk;
+  final PrototypeVariant variant;
   final VoidCallback onReloadRol;
   final VoidCallback onReloadDir;
   final Future<void> Function() onApply;
@@ -411,6 +426,7 @@ class _LoadedState extends StatelessWidget {
     required this.keepBackup,
     required this.running,
     required this.exiftoolOk,
+    required this.variant,
     required this.onReloadRol,
     required this.onReloadDir,
     required this.onApply,
@@ -451,35 +467,15 @@ class _LoadedState extends StatelessWidget {
               ),
             ),
           ),
-        _AdjustBar(
-          running: running,
-          onShiftLeft: () => onShiftRight(-1),
-          onShiftRight: () => onShiftRight(1),
-          onReverseRight: onReverseRight,
-        ),
-        const Divider(height: 1),
-        Expanded(
-          child: ListView.separated(
-            itemCount: len,
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (_, i) {
-              final li = leftIdx[i];
-              final ri = rightIdx[i];
-              return _MatchRowTile(
-                index: i,
-                shot: li == null ? null : rol.roll.shots[li],
-                file: ri == null ? null : scanFiles[ri],
-                rol: rol,
-                status: status[i] ?? _RowStatus.idle,
-                expanded: expanded.contains(i),
-                canAdjust: !running,
-                onToggle: () => onToggleExpanded(i),
-                onInsertGapLeft: () => onInsertGap(i, left: true),
-                onInsertGapRight: () => onInsertGap(i, left: false),
-              );
-            },
+        if (variant == PrototypeVariant.a)
+          _AdjustBar(
+            running: running,
+            onShiftLeft: () => onShiftRight(-1),
+            onShiftRight: () => onShiftRight(1),
+            onReverseRight: onReverseRight,
           ),
-        ),
+        const Divider(height: 1),
+        Expanded(child: _variantBody(context)),
         const Divider(height: 1),
         _BottomBar(
           matched: matched,
@@ -495,6 +491,18 @@ class _LoadedState extends StatelessWidget {
       ],
     );
   }
+
+  Widget _variantBody(BuildContext context) {
+    final ctx = GapUxContext(
+      rol: rol, scanFiles: scanFiles, leftIdx: leftIdx, rightIdx: rightIdx,
+    );
+    switch (variant) {
+      case PrototypeVariant.a: return VariantA(ctx: ctx);
+      case PrototypeVariant.b: return VariantB(ctx: ctx);
+      case PrototypeVariant.c: return VariantC(ctx: ctx);
+    }
+  }
+
 }
 
 class _AdjustBar extends StatelessWidget {
