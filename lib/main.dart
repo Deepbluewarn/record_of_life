@@ -9,6 +9,7 @@ import 'package:record_of_life/data/store.dart';
 import 'package:record_of_life/features/roll/presentation/pages/home_page.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
 import 'package:record_of_life/features/settings/pages/handedness_onboarding.dart';
+import 'package:record_of_life/features/settings/pages/onboarding_artist_page.dart';
 import 'package:record_of_life/features/settings/pages/onboarding_equipment_page.dart';
 import 'package:record_of_life/features/settings/providers/settings_provider.dart';
 import 'package:record_of_life/shared/theme/app_theme.dart';
@@ -70,6 +71,7 @@ class _Root extends ConsumerWidget {
         if (!s.equipmentReady) {
           return const OnboardingEquipmentPage();
         }
+        if (!s.artistAsked) return const OnboardingArtistPage();
         return const HomePage();
       },
       loading: () => const Scaffold(
