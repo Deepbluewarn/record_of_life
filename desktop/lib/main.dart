@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import 'exiftool.dart';
+import 'matching.dart';
 import 'rol_json.dart';
 import 'sample.dart';
 
@@ -32,14 +33,16 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-enum _RowPhase { idle, running, ok, fail }
+enum _MatchPhase { idle, running, ok, fail }
 
-class _RowStatus {
-  final _RowPhase phase;
+class _MatchStatus {
+  final _MatchPhase phase;
   final String? stderr;
-  const _RowStatus(this.phase, {this.stderr});
-  static const idle = _RowStatus(_RowPhase.idle);
+  const _MatchStatus(this.phase, {this.stderr});
+  static const idle = _MatchStatus(_MatchPhase.idle);
 }
+
+enum MatchSide { shot, file }
 
 class _MainPageState extends State<MainPage> {
   RolExport? _rol;
@@ -51,67 +54,15 @@ class _MainPageState extends State<MainPage> {
   // T6: default false = -overwrite_original_in_place (백업 없음).
   bool _keepBackup = false;
   bool? _exiftoolOk;
-  final Map<int, _RowStatus> _status = {};
-  final Set<int> _expanded = {};
   bool _running = false;
+  // shot idx → 주입 상태
+  final Map<int, _MatchStatus> _status = {};
 
-  // T2 매칭 상태. 각 리스트 원소는 인덱스(shots/scanFiles) 또는 null(갭).
-  // 리스트 길이 = 행 개수. 두 리스트는 항상 같은 길이.
-  List<int?> _leftIdx = [];
-  List<int?> _rightIdx = [];
+  MatchState _match = const MatchState({}, 0, 0);
 
-  void _rebuildRows() {
-    final shots = _rol?.roll.shots.length ?? 0;
-    final files = _scanFiles.length;
-    _leftIdx = [for (var i = 0; i < shots; i++) i];
-    _rightIdx = [for (var i = 0; i < files; i++) i];
-    _padRows();
-    _status.clear();
-    _expanded.clear();
-  }
-
-  void _padRows() {
-    final len = _leftIdx.length > _rightIdx.length
-        ? _leftIdx.length
-        : _rightIdx.length;
-    while (_leftIdx.length < len) {
-      _leftIdx.add(null);
-    }
-    while (_rightIdx.length < len) {
-      _rightIdx.add(null);
-    }
-  }
-
-  void _shiftRight(int by) {
-    setState(() {
-      if (by > 0) {
-        _rightIdx.insertAll(0, List.filled(by, null));
-      } else {
-        for (var i = 0; i < -by; i++) {
-          if (_rightIdx.isNotEmpty && _rightIdx.first == null) {
-            _rightIdx.removeAt(0);
-          }
-        }
-      }
-      _padRows();
-      _status.clear();
-    });
-  }
-
-  void _insertGap(int at, {required bool left}) {
-    setState(() {
-      (left ? _leftIdx : _rightIdx).insert(at, null);
-      _padRows();
-      _status.clear();
-    });
-  }
-
-  void _reverseRight() {
-    setState(() {
-      _rightIdx = _rightIdx.reversed.toList();
-      _status.clear();
-    });
-  }
+  // 두 그리드 UI의 클릭 선택. 반대편 클릭 = 매치, 같은편 = 스왑.
+  MatchSide? _selSide;
+  int? _selIdx;
 
   @override
   void initState() {
@@ -119,6 +70,14 @@ class _MainPageState extends State<MainPage> {
     exiftoolAvailable().then((ok) {
       if (mounted) setState(() => _exiftoolOk = ok);
     });
+  }
+
+  void _rebuildMatch() {
+    _match = MatchState.autoMatch(
+        _rol?.roll.shots.length ?? 0, _scanFiles.length);
+    _status.clear();
+    _selSide = null;
+    _selIdx = null;
   }
 
   Future<void> _openRolFile() async {
@@ -142,7 +101,7 @@ class _MainPageState extends State<MainPage> {
         _rol = rol;
         _rolPath = f.path;
         _error = null;
-        _rebuildRows();
+        _rebuildMatch();
       });
     } catch (e) {
       setState(() => _error = '${f.path} 로드 실패: $e');
@@ -150,7 +109,6 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _loadScanDir(Directory dir) {
-    // T2 초기 배치: 파일명 자연 정렬. 이미지 확장자만.
     final files = dir
         .listSync()
         .whereType<File>()
@@ -161,7 +119,7 @@ class _MainPageState extends State<MainPage> {
       _scanDir = dir;
       _scanFiles = files;
       _error = null;
-      _rebuildRows();
+      _rebuildMatch();
     });
   }
 
@@ -185,7 +143,7 @@ class _MainPageState extends State<MainPage> {
       _scanDir = Directory('(sample)');
       _scanFiles = sampleScanFiles();
       _error = null;
-      _rebuildRows();
+      _rebuildMatch();
     });
   }
 
@@ -196,7 +154,94 @@ class _MainPageState extends State<MainPage> {
       _scanDir = null;
       _scanFiles = const [];
       _error = null;
+      _match = const MatchState({}, 0, 0);
+      _status.clear();
+      _selSide = null;
+      _selIdx = null;
     });
+  }
+
+  // 두 그리드 상호작용:
+  // - 선택 없음 + 클릭 → 하이라이트만
+  // - 선택 있음 + 반대편 클릭 → 그 shot ↔ file 매치
+  // - 선택 있음 + 같은편 다른 아이템 클릭 → 두 아이템의 file 매핑 스왑 (shot 기준)
+  void _onTapCell(MatchSide side, int idx) {
+    if (_running) return;
+    setState(() {
+      if (_selSide == null) {
+        _selSide = side;
+        _selIdx = idx;
+        return;
+      }
+      if (_selSide == side && _selIdx == idx) {
+        // 자기 자신 재클릭 → 선택 해제
+        _selSide = null;
+        _selIdx = null;
+        return;
+      }
+      if (_selSide == side) {
+        if (side == MatchSide.shot) {
+          _match = _match.swapShots(_selIdx!, idx);
+        } else {
+          // file 쌍 스왑 = 그 file들을 잡고 있는 shot들의 매핑 교환
+          final sa = _match.shotForFile(_selIdx!);
+          final sb = _match.shotForFile(idx);
+          if (sa != null && sb != null) {
+            _match = _match.reassign(sa, idx).reassign(sb, _selIdx!);
+          } else if (sa != null) {
+            _match = _match.reassign(sa, idx);
+          } else if (sb != null) {
+            _match = _match.reassign(sb, _selIdx!);
+          }
+        }
+      } else {
+        final shot = side == MatchSide.shot ? idx : _selIdx!;
+        final file = side == MatchSide.file ? idx : _selIdx!;
+        _match = _match.reassign(shot, file);
+      }
+      _selSide = null;
+      _selIdx = null;
+      _status.clear();
+    });
+  }
+
+  void _unmatchShot(int shot) {
+    if (_running) return;
+    setState(() {
+      _match = _match.unmatch(shot);
+      _status.remove(shot);
+      _selSide = null;
+      _selIdx = null;
+    });
+  }
+
+  Future<void> _apply() async {
+    if (_running || _rol == null) return;
+    setState(() {
+      _running = true;
+      _status.clear();
+    });
+    final entries = _match.shotToFile.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    for (final e in entries) {
+      final shotIdx = e.key;
+      final fileIdx = e.value;
+      setState(
+          () => _status[shotIdx] = const _MatchStatus(_MatchPhase.running));
+      final shot = _rol!.roll.shots[shotIdx];
+      final args = shotToArgs(export: _rol!, shot: shot);
+      final res = await injectFile(
+        args: args,
+        targetPath: _scanFiles[fileIdx].path,
+        keepBackup: _keepBackup,
+      );
+      setState(() {
+        _status[shotIdx] = res.ok
+            ? const _MatchStatus(_MatchPhase.ok)
+            : _MatchStatus(_MatchPhase.fail, stderr: res.stderr);
+      });
+    }
+    setState(() => _running = false);
   }
 
   @override
@@ -217,25 +262,23 @@ class _MainPageState extends State<MainPage> {
       body: DropTarget(
         onDragDone: _onDrop,
         child: loaded
-            ? _LoadedState(
+            ? _MatchingLoaded(
                 rol: _rol!,
                 scanDir: _scanDir!,
                 scanFiles: _scanFiles,
-                leftIdx: _leftIdx,
-                rightIdx: _rightIdx,
+                match: _match,
                 status: _status,
-                expanded: _expanded,
-                keepBackup: _keepBackup,
+                selSide: _selSide,
+                selIdx: _selIdx,
                 running: _running,
+                keepBackup: _keepBackup,
                 exiftoolOk: _exiftoolOk,
                 onReloadRol: _openRolFile,
                 onReloadDir: _openScanDir,
-                onApply: _apply,
-                onToggleExpanded: _toggleExpanded,
+                onTapCell: _onTapCell,
+                onUnmatchShot: _unmatchShot,
                 onKeepBackupChanged: (v) => setState(() => _keepBackup = v),
-                onShiftRight: _shiftRight,
-                onReverseRight: _reverseRight,
-                onInsertGap: _insertGap,
+                onApply: _apply,
               )
             : _EmptyState(
                 rol: _rol,
@@ -248,44 +291,6 @@ class _MainPageState extends State<MainPage> {
               ),
       ),
     );
-  }
-
-  // T5/T6. 매칭된 행 순차 주입. 실패해도 나머지 계속.
-  Future<void> _apply() async {
-    if (_running || _rol == null) return;
-    setState(() {
-      _running = true;
-      _status.clear();
-    });
-    for (var i = 0; i < _leftIdx.length; i++) {
-      final l = _leftIdx[i];
-      final r = _rightIdx[i];
-      if (l == null || r == null) continue;
-      setState(() => _status[i] = const _RowStatus(_RowPhase.running));
-      final shot = _rol!.roll.shots[l];
-      final args = shotToArgs(export: _rol!, shot: shot);
-      final res = await injectFile(
-        args: args,
-        targetPath: _scanFiles[r].path,
-        keepBackup: _keepBackup,
-      );
-      setState(() {
-        _status[i] = res.ok
-            ? const _RowStatus(_RowPhase.ok)
-            : _RowStatus(_RowPhase.fail, stderr: res.stderr);
-      });
-    }
-    setState(() => _running = false);
-  }
-
-  void _toggleExpanded(int i) {
-    setState(() {
-      if (_expanded.contains(i)) {
-        _expanded.remove(i);
-      } else {
-        _expanded.add(i);
-      }
-    });
   }
 }
 
@@ -325,8 +330,7 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.file_download_outlined,
-                size: 64,
-                color: Theme.of(context).colorScheme.outline),
+                size: 64, color: Theme.of(context).colorScheme.outline),
             const SizedBox(height: 16),
             Text(
               '.rol.json + 스캔 폴더를 여기로 드롭',
@@ -380,65 +384,59 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _LoadedState extends StatelessWidget {
+// 두 그리드 + 스왑 매칭 UI. shot 열과 file 열, 자동 매치는 같은 번호 배지로 표시.
+class _MatchingLoaded extends StatelessWidget {
   final RolExport rol;
   final Directory scanDir;
   final List<File> scanFiles;
-  final List<int?> leftIdx;
-  final List<int?> rightIdx;
-  final Map<int, _RowStatus> status;
-  final Set<int> expanded;
-  final bool keepBackup;
+  final MatchState match;
+  final Map<int, _MatchStatus> status;
+  final MatchSide? selSide;
+  final int? selIdx;
   final bool running;
+  final bool keepBackup;
   final bool? exiftoolOk;
   final VoidCallback onReloadRol;
   final VoidCallback onReloadDir;
-  final Future<void> Function() onApply;
-  final void Function(int) onToggleExpanded;
+  final void Function(MatchSide, int) onTapCell;
+  final void Function(int) onUnmatchShot;
   final ValueChanged<bool> onKeepBackupChanged;
-  final void Function(int) onShiftRight;
-  final VoidCallback onReverseRight;
-  final void Function(int at, {required bool left}) onInsertGap;
+  final Future<void> Function() onApply;
 
-  const _LoadedState({
+  const _MatchingLoaded({
     required this.rol,
     required this.scanDir,
     required this.scanFiles,
-    required this.leftIdx,
-    required this.rightIdx,
+    required this.match,
     required this.status,
-    required this.expanded,
-    required this.keepBackup,
+    required this.selSide,
+    required this.selIdx,
     required this.running,
+    required this.keepBackup,
     required this.exiftoolOk,
     required this.onReloadRol,
     required this.onReloadDir,
-    required this.onApply,
-    required this.onToggleExpanded,
+    required this.onTapCell,
+    required this.onUnmatchShot,
     required this.onKeepBackupChanged,
-    required this.onShiftRight,
-    required this.onReverseRight,
-    required this.onInsertGap,
+    required this.onApply,
   });
+
+  Color _badgeColor(int matchIdx) {
+    // 매치 인덱스 → 색상 hue. shot idx 기준으로 짝지어져 좌우 같은 색.
+    final hue = (matchIdx * 47) % 360;
+    return HSLColor.fromAHSL(1, hue.toDouble(), 0.55, 0.55).toColor();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final len = leftIdx.length;
-    var matched = 0;
-    for (var i = 0; i < len; i++) {
-      if (leftIdx[i] != null && rightIdx[i] != null) matched++;
-    }
-    final done = status.values.where((s) => s.phase == _RowPhase.ok).length;
-    final failed = status.values.where((s) => s.phase == _RowPhase.fail).length;
+    final done = status.values.where((s) => s.phase == _MatchPhase.ok).length;
+    final failed =
+        status.values.where((s) => s.phase == _MatchPhase.fail).length;
 
     return Column(
       children: [
-        _MetaBar(
-          rol: rol,
-          scanDir: scanDir,
-          onReloadRol: onReloadRol,
-          onReloadDir: onReloadDir,
-        ),
+        _metaBar(context),
         if (exiftoolOk == false)
           Container(
             width: double.infinity,
@@ -447,112 +445,28 @@ class _LoadedState extends StatelessWidget {
             child: Text(
               'exiftool 이 PATH에 없음. 설치 후 앱을 재실행하세요.',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onErrorContainer,
-              ),
+                  color: Theme.of(context).colorScheme.onErrorContainer),
             ),
           ),
-        _AdjustBar(
-          running: running,
-          onShiftLeft: () => onShiftRight(-1),
-          onShiftRight: () => onShiftRight(1),
-          onReverseRight: onReverseRight,
-        ),
+        _selectionHint(context),
         const Divider(height: 1),
         Expanded(
-          child: ListView.separated(
-            itemCount: len,
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (_, i) {
-              final li = leftIdx[i];
-              final ri = rightIdx[i];
-              return _MatchRowTile(
-                index: i,
-                shot: li == null ? null : rol.roll.shots[li],
-                file: ri == null ? null : scanFiles[ri],
-                rol: rol,
-                status: status[i] ?? _RowStatus.idle,
-                expanded: expanded.contains(i),
-                canAdjust: !running,
-                onToggle: () => onToggleExpanded(i),
-                onInsertGapLeft: () => onInsertGap(i, left: true),
-                onInsertGapRight: () => onInsertGap(i, left: false),
-              );
-            },
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _shotColumn(context)),
+              const VerticalDivider(width: 1),
+              Expanded(child: _fileColumn(context)),
+            ],
           ),
         ),
         const Divider(height: 1),
-        _BottomBar(
-          matched: matched,
-          total: len,
-          done: done,
-          failed: failed,
-          running: running,
-          keepBackup: keepBackup,
-          canApply: exiftoolOk == true,
-          onApply: onApply,
-          onKeepBackupChanged: onKeepBackupChanged,
-        ),
+        _bottomBar(context, done, failed),
       ],
     );
   }
-}
 
-class _AdjustBar extends StatelessWidget {
-  final bool running;
-  final VoidCallback onShiftLeft;
-  final VoidCallback onShiftRight;
-  final VoidCallback onReverseRight;
-  const _AdjustBar({
-    required this.running,
-    required this.onShiftLeft,
-    required this.onShiftRight,
-    required this.onReverseRight,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Row(
-        children: [
-          Text('오른쪽 열:',
-              style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: '왼쪽으로 shift (앞 갭 제거)',
-            icon: const Icon(Icons.arrow_back, size: 18),
-            onPressed: running ? null : onShiftLeft,
-          ),
-          IconButton(
-            tooltip: '오른쪽으로 shift (앞에 갭 삽입)',
-            icon: const Icon(Icons.arrow_forward, size: 18),
-            onPressed: running ? null : onShiftRight,
-          ),
-          IconButton(
-            tooltip: '역순 (스캐너 역순 반환)',
-            icon: const Icon(Icons.swap_vert, size: 18),
-            onPressed: running ? null : onReverseRight,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetaBar extends StatelessWidget {
-  final RolExport rol;
-  final Directory scanDir;
-  final VoidCallback onReloadRol;
-  final VoidCallback onReloadDir;
-
-  const _MetaBar({
-    required this.rol,
-    required this.scanDir,
-    required this.onReloadRol,
-    required this.onReloadDir,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _metaBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -582,141 +496,100 @@ class _MetaBar extends StatelessWidget {
       ),
     );
   }
-}
 
-class _MatchRowTile extends StatelessWidget {
-  final int index;
-  final Shot? shot;
-  final File? file;
-  final RolExport rol;
-  final _RowStatus status;
-  final bool expanded;
-  final bool canAdjust;
-  final VoidCallback onToggle;
-  final VoidCallback onInsertGapLeft;
-  final VoidCallback onInsertGapRight;
-
-  const _MatchRowTile({
-    required this.index,
-    required this.shot,
-    required this.file,
-    required this.rol,
-    required this.status,
-    required this.expanded,
-    required this.canAdjust,
-    required this.onToggle,
-    required this.onInsertGapLeft,
-    required this.onInsertGapRight,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final canExpand = shot != null;
-    return Column(
-      children: [
-        InkWell(
-          onTap: canExpand ? onToggle : null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(
-                  canExpand
-                      ? (expanded ? Icons.expand_more : Icons.chevron_right)
-                      : Icons.remove,
-                  size: 20,
-                  color: Colors.grey,
-                ),
-                const SizedBox(width: 8),
-                Expanded(child: _shotCell(context)),
-                const SizedBox(width: 16),
-                Expanded(child: _fileCell(context)),
-                const SizedBox(width: 8),
-                _statusIcon(),
-              ],
-            ),
-          ),
-        ),
-        if (expanded && shot != null) _expansion(context),
-      ],
+  Widget _selectionHint(BuildContext context) {
+    final t = Theme.of(context).textTheme.bodySmall;
+    final msg = selSide == null
+        ? '아이템 클릭 → 반대편 클릭으로 매치 · 같은편 클릭으로 스왑'
+        : '${selSide == MatchSide.shot ? "shot" : "file"} 선택됨 · 대상 클릭 (같은 아이템 재클릭 = 취소)';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Text(msg, style: t?.copyWith(color: Colors.grey)),
     );
   }
 
-  Widget _statusIcon() {
-    switch (status.phase) {
-      case _RowPhase.idle:
-        return const SizedBox(width: 20);
-      case _RowPhase.running:
-        return const SizedBox(
-          width: 20, height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        );
-      case _RowPhase.ok:
-        return const Icon(Icons.check_circle, color: Colors.green, size: 20);
-      case _RowPhase.fail:
-        return const Icon(Icons.error, color: Colors.red, size: 20);
-    }
-  }
-
-  Widget _expansion(BuildContext context) {
-    // T4: 인라인 확장 — 이 shot이 파일에 쓸 태그 전체 나열. 실패 시 stderr도.
-    final args = shotToArgs(export: rol, shot: shot!);
-    return Container(
-      width: double.infinity,
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      padding: const EdgeInsets.fromLTRB(52, 8, 16, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (args.isEmpty)
-            const Text('(주입할 태그 없음)',
-                style: TextStyle(fontStyle: FontStyle.italic))
-          else
-            SelectableText(
-              args.join('\n'),
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12,
-              ),
-            ),
-          if (status.phase == _RowPhase.fail && status.stderr != null) ...[
-            const SizedBox(height: 8),
-            Text('exiftool 오류:',
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontWeight: FontWeight.bold)),
-            SelectableText(
-              status.stderr!,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ),
-          ],
-        ],
+  Widget _shotColumn(BuildContext context) {
+    final shots = rol.roll.shots;
+    return ListView.separated(
+      itemCount: shots.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (_, i) => _cell(
+        context: context,
+        side: MatchSide.shot,
+        idx: i,
+        matchIdx: match.fileForShot(i),
+        content: _shotContent(context, shots[i], status[i] ?? _MatchStatus.idle),
+        onLongPress:
+            match.fileForShot(i) != null ? () => onUnmatchShot(i) : null,
       ),
     );
   }
 
-  Widget _shotCell(BuildContext context) {
-    final s = shot;
-    if (s == null) {
-      return Row(
-        children: [
-          const Expanded(
-              child: Text('— 갭 —', style: TextStyle(color: Colors.grey))),
-          if (canAdjust)
-            IconButton(
-              tooltip: '왼쪽에 갭 삽입',
-              iconSize: 16,
-              icon: const Icon(Icons.add_box_outlined),
-              onPressed: onInsertGapLeft,
-            ),
-        ],
-      );
-    }
+  Widget _fileColumn(BuildContext context) {
+    return ListView.separated(
+      itemCount: scanFiles.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (_, i) => _cell(
+        context: context,
+        side: MatchSide.file,
+        idx: i,
+        matchIdx: match.shotForFile(i),
+        content: _fileContent(context, scanFiles[i]),
+      ),
+    );
+  }
+
+  Widget _cell({
+    required BuildContext context,
+    required MatchSide side,
+    required int idx,
+    required int? matchIdx,
+    required Widget content,
+    VoidCallback? onLongPress,
+  }) {
+    final selected = selSide == side && selIdx == idx;
+    // 색 hue 기준: shot idx. side=shot 이면 idx 자체, side=file 이면 잡고 있는 shot.
+    final hueKey = side == MatchSide.shot ? idx : matchIdx;
+    final badgeColor = matchIdx == null || hueKey == null
+        ? Colors.grey.shade400
+        : _badgeColor(hueKey);
+    final badgeLabel = matchIdx == null ? '?' : '${matchIdx + 1}';
+
+    return Material(
+      color: selected
+          ? Theme.of(context).colorScheme.primaryContainer
+          : Colors.transparent,
+      child: InkWell(
+        onTap: () => onTapCell(side, idx),
+        onLongPress: onLongPress,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                    color: badgeColor, shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: Text(
+                  badgeLabel,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: content),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _shotContent(BuildContext context, Shot s, _MatchStatus st) {
     return Row(
       children: [
         Expanded(
@@ -725,7 +598,8 @@ class _MatchRowTile extends StatelessWidget {
             children: [
               Text('#${s.idx}',
                   style: Theme.of(context).textTheme.labelLarge),
-              Text(s.summary),
+              Text(s.summary,
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
               if (s.note != null)
                 Text(s.note!,
                     maxLines: 1,
@@ -737,40 +611,17 @@ class _MatchRowTile extends StatelessWidget {
             ],
           ),
         ),
-        if (canAdjust)
-          IconButton(
-            tooltip: '왼쪽에 갭 삽입 (이 shot 이후로 밀림)',
-            iconSize: 16,
-            icon: const Icon(Icons.add_box_outlined),
-            onPressed: onInsertGapLeft,
-          ),
+        _statusIcon(st),
       ],
     );
   }
 
-  Widget _fileCell(BuildContext context) {
-    final f = file;
-    if (f == null) {
-      return Row(
-        children: [
-          const Expanded(
-              child: Text('— 갭 —', style: TextStyle(color: Colors.grey))),
-          if (canAdjust)
-            IconButton(
-              tooltip: '오른쪽에 갭 삽입',
-              iconSize: 16,
-              icon: const Icon(Icons.add_box_outlined),
-              onPressed: onInsertGapRight,
-            ),
-        ],
-      );
-    }
+  Widget _fileContent(BuildContext context, File f) {
     return Row(
       children: [
-        // T2: 매칭 화면 안에서만 렌더. 저장·풀뷰어 없음.
         SizedBox(
-          width: 64,
-          height: 64,
+          width: 48,
+          height: 48,
           child: Image.file(
             f,
             fit: BoxFit.cover,
@@ -785,49 +636,37 @@ class _MatchRowTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        if (canAdjust)
-          IconButton(
-            tooltip: '오른쪽에 갭 삽입 (이 파일 이후로 밀림)',
-            iconSize: 16,
-            icon: const Icon(Icons.add_box_outlined),
-            onPressed: onInsertGapRight,
-          ),
       ],
     );
   }
-}
 
-class _BottomBar extends StatelessWidget {
-  final int matched;
-  final int total;
-  final int done;
-  final int failed;
-  final bool running;
-  final bool keepBackup;
-  final bool canApply;
-  final VoidCallback onApply;
-  final ValueChanged<bool> onKeepBackupChanged;
+  Widget _statusIcon(_MatchStatus st) {
+    switch (st.phase) {
+      case _MatchPhase.idle:
+        return const SizedBox(width: 20);
+      case _MatchPhase.running:
+        return const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        );
+      case _MatchPhase.ok:
+        return const Icon(Icons.check_circle, color: Colors.green, size: 20);
+      case _MatchPhase.fail:
+        return Tooltip(
+          message: st.stderr ?? 'exiftool 실패',
+          child: const Icon(Icons.error, color: Colors.red, size: 20),
+        );
+    }
+  }
 
-  const _BottomBar({
-    required this.matched,
-    required this.total,
-    required this.done,
-    required this.failed,
-    required this.running,
-    required this.keepBackup,
-    required this.canApply,
-    required this.onApply,
-    required this.onKeepBackupChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // T6: keepBackup off = -overwrite_original_in_place. On = <file>_original 남김.
-    final status = running
+  Widget _bottomBar(BuildContext context, int done, int failed) {
+    final matched = match.matchedCount;
+    final statusText = running
         ? '$done / $matched 진행중${failed > 0 ? " · $failed 실패" : ""}'
         : done + failed > 0
-            ? '$done 성공${failed > 0 ? " · $failed 실패" : ""} · $matched 매칭 / $total 행'
-            : '$matched / $total 매칭됨';
+            ? '$done 성공${failed > 0 ? " · $failed 실패" : ""} · $matched 매치'
+            : '$matched 매치 · shot ${match.shotCount} · file ${match.fileCount}';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -839,7 +678,9 @@ class _BottomBar extends StatelessWidget {
                 : '원본에 직접 쓰기 (백업 없음)',
             child: Row(
               children: [
-                Switch(value: keepBackup, onChanged: running ? null : onKeepBackupChanged),
+                Switch(
+                    value: keepBackup,
+                    onChanged: running ? null : onKeepBackupChanged),
                 const SizedBox(width: 4),
                 const Text('백업 유지'),
               ],
@@ -847,11 +688,12 @@ class _BottomBar extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Text(status,
+            child: Text(statusText,
                 style: Theme.of(context).textTheme.bodyMedium),
           ),
           FilledButton.icon(
-            onPressed: (matched == 0 || running || !canApply) ? null : onApply,
+            onPressed:
+                (matched == 0 || running || exiftoolOk != true) ? null : onApply,
             icon: const Icon(Icons.play_arrow),
             label: const Text('Apply EXIF'),
           ),
