@@ -50,7 +50,10 @@ class _AllRollsPageState extends ConsumerState<AllRollsPage> {
         allRolls.where((r) => _selectedIds.contains(r.id)).toList();
     if (selected.isEmpty) return;
     try {
-      await ref.read(exportServiceProvider).exportRolls(selected);
+      // 다중 선택 export: 롤마다 .rol.json 하나씩. argfile은 롤 상세에서 개별로.
+      for (final r in selected) {
+        await ref.read(exportServiceProvider).exportRoll(r, RollExportFormat.rolJson);
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
