@@ -17,6 +17,7 @@ abstract class RollRepository {
     String? labId,
     DateTime? sentToLabAt,
     DateTime? expectedReturnAt,
+    int? pushPull,
   });
   Future<bool> deleteRoll(String rollId);
   Future<void> incrementShotsDone(String rollId);

@@ -57,6 +57,7 @@ class RollRepositoryImpl extends RollRepository {
     String? labId,
     DateTime? sentToLabAt,
     DateTime? expectedReturnAt,
+    int? pushPull,
   }) async {
     final snap = await AppStore.rolls.record(rollId).getSnapshot(_store.db);
     if (snap == null) return;
@@ -72,6 +73,7 @@ class RollRepositoryImpl extends RollRepository {
       labId: labId,
       sentToLabAt: sentToLabAt,
       expectedReturnAt: expectedReturnAt,
+      pushPull: pushPull,
     );
     await AppStore.rolls.record(rollId).put(_store.db, updated.toMap());
   }

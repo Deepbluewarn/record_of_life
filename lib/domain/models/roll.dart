@@ -26,6 +26,9 @@ class Roll {
   final DateTime? sentToLabAt;
   final DateTime? expectedReturnAt;
 
+  // 현상 push/pull. stop 단위 (-3~+3). 0/null = 표준 현상.
+  final int? pushPull;
+
   Roll({
     String? id,
     this.camera,
@@ -41,6 +44,7 @@ class Roll {
     this.labId,
     this.sentToLabAt,
     this.expectedReturnAt,
+    this.pushPull,
   }) : id = id ?? const Uuid().v4(),
        status = status ?? RollStatus.planning,
        startedAt = startedAt ?? DateTime.now();
@@ -66,6 +70,7 @@ class Roll {
     String? labId,
     DateTime? sentToLabAt,
     DateTime? expectedReturnAt,
+    int? pushPull,
   }) {
     return Roll(
       id: id,
@@ -82,6 +87,7 @@ class Roll {
       labId: labId ?? this.labId,
       sentToLabAt: sentToLabAt ?? this.sentToLabAt,
       expectedReturnAt: expectedReturnAt ?? this.expectedReturnAt,
+      pushPull: pushPull ?? this.pushPull,
     );
   }
 
@@ -100,6 +106,7 @@ class Roll {
     'labId': labId,
     'sentToLabAt': sentToLabAt?.toIso8601String(),
     'expectedReturnAt': expectedReturnAt?.toIso8601String(),
+    'pushPull': pushPull,
   };
 
   factory Roll.fromMap(Map<String, Object?> m) => Roll(
@@ -132,6 +139,7 @@ class Roll {
     expectedReturnAt: m['expectedReturnAt'] == null
         ? null
         : DateTime.parse(m['expectedReturnAt'] as String),
+    pushPull: m['pushPull'] as int?,
   );
 
   @override

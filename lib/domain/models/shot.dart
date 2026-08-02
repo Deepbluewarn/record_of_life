@@ -18,6 +18,10 @@ class Shot {
   final double? gpsLng;
   final String? note;
   final int? rating;
+  // 고급 옵션. null = 미기록.
+  final bool? flash;
+  final String? filter; // ND8, 폴라 등 자유 텍스트
+  final bool? tripod;
 
   Shot({
     String? id,
@@ -34,6 +38,9 @@ class Shot {
     this.gpsLng,
     this.note,
     this.rating,
+    this.flash,
+    this.filter,
+    this.tripod,
   }) : id = id ?? const Uuid().v4();
 
   Shot copyWith({
@@ -49,6 +56,9 @@ class Shot {
     double? gpsLng,
     String? note,
     int? rating,
+    bool? flash,
+    String? filter,
+    bool? tripod,
   }) {
     return Shot(
       id: id,
@@ -65,6 +75,9 @@ class Shot {
       gpsLng: gpsLng ?? this.gpsLng,
       note: note ?? this.note,
       rating: rating ?? this.rating,
+      flash: flash ?? this.flash,
+      filter: filter ?? this.filter,
+      tripod: tripod ?? this.tripod,
     );
   }
 
@@ -83,6 +96,9 @@ class Shot {
     'gpsLng': gpsLng,
     'note': note,
     'rating': rating,
+    'flash': flash,
+    'filter': filter,
+    'tripod': tripod,
   };
 
   factory Shot.fromMap(Map<String, Object?> m) => Shot(
@@ -100,6 +116,9 @@ class Shot {
     gpsLng: (m['gpsLng'] as num?)?.toDouble(),
     note: m['note'] as String?,
     rating: m['rating'] as int?,
+    flash: m['flash'] as bool?,
+    filter: m['filter'] as String?,
+    tripod: m['tripod'] as bool?,
   );
 }
 
