@@ -70,9 +70,9 @@ class _RollDetailsPageState extends ConsumerState<RollDetailsPage> {
     );
   }
 
-  Future<void> _exportRoll(Roll current) async {
+  Future<void> _exportRoll(Roll current, RollExportFormat format) async {
     try {
-      await ref.read(exportServiceProvider).exportRolls([current]);
+      await ref.read(exportServiceProvider).exportRoll(current, format);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -169,8 +169,10 @@ class _RollDetailsPageState extends ConsumerState<RollDetailsPage> {
                       builder: (_) => AddRollPage(roll: currentRoll),
                     ),
                   );
-                case 'export':
-                  _exportRoll(currentRoll);
+                case 'export_rol':
+                  _exportRoll(currentRoll, RollExportFormat.rolJson);
+                case 'export_args':
+                  _exportRoll(currentRoll, RollExportFormat.argfile);
                 case 'delete':
                   _confirmDelete(currentRoll);
                 case 'settings':
@@ -186,8 +188,18 @@ class _RollDetailsPageState extends ConsumerState<RollDetailsPage> {
                 child: _MenuRow(icon: Icons.edit, label: '편집'),
               ),
               PopupMenuItem(
-                value: 'export',
-                child: _MenuRow(icon: Icons.ios_share, label: '공유'),
+                value: 'export_rol',
+                child: _MenuRow(
+                  icon: Icons.ios_share,
+                  label: '내보내기 (.rol.json)',
+                ),
+              ),
+              PopupMenuItem(
+                value: 'export_args',
+                child: _MenuRow(
+                  icon: Icons.terminal,
+                  label: 'exiftool argfile (.args)',
+                ),
               ),
               PopupMenuItem(
                 value: 'delete',
@@ -299,6 +311,14 @@ class _DevelopingSheet extends ConsumerWidget {
               _row(context, '맡긴날', _fmtDate(roll.sentToLabAt!)),
             if (roll.expectedReturnAt != null)
               _row(context, '회수예정', _fmtDate(roll.expectedReturnAt!)),
+            if (roll.pushPull != null && roll.pushPull != 0)
+              _row(
+                context,
+                '현상 보정',
+                roll.pushPull! > 0
+                    ? '+${roll.pushPull} stop (push)'
+                    : '${roll.pushPull} stop (pull)',
+              ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,

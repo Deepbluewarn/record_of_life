@@ -9,49 +9,49 @@ import 'package:record_of_life/domain/models/lens.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 import 'package:record_of_life/features/roll/presentation/providers/repository_provider.dart';
+import 'package:record_of_life/features/settings/providers/settings_provider.dart';
 import 'package:share_plus/share_plus.dart';
+
+enum RollExportFormat { rolJson, argfile }
 
 class ExportService {
   final Ref ref;
   ExportService(this.ref);
 
-  Future<void> exportRolls(List<Roll> rolls) async {
-    final shotRepo = ref.read(shotRepositoryProvider);
-    final lensRepo = ref.read(lensRepositoryProvider);
+  Future<void> exportRoll(Roll roll, RollExportFormat format) async {
+    final bundle = await _load(roll);
+    final artist = (await ref.read(settingsProvider.future)).artist;
+    final slug = slugForFilename(roll.title ?? roll.id);
 
-    final allShots = <Shot>[];
-    for (final r in rolls) {
-      allShots.addAll(await shotRepo.getShotsByRollId(r.id));
-    }
-    final lensIds = <String>{
-      for (final r in rolls)
-        if (r.defaultLensId != null) r.defaultLensId!,
-      for (final s in allShots)
-        if (s.lensId != null) s.lensId!,
+    final (String body, String filename, String mimeType) = switch (format) {
+      RollExportFormat.rolJson => (
+          buildRolJson(
+            roll: roll,
+            shots: bundle.shots,
+            lenses: bundle.lenses,
+            artist: artist,
+          ),
+          '$slug.rol.json',
+          'application/json',
+        ),
+      RollExportFormat.argfile => (
+          buildArgfile(
+            roll: roll,
+            shots: bundle.shots,
+            lenses: bundle.lenses,
+            artist: artist,
+          ),
+          '$slug.args',
+          'text/plain',
+        ),
     };
-    final List<Lens> lenses = lensIds.isEmpty
-        ? const []
-        : await lensRepo.getLenses(lensIds.toList());
 
-    final json = ExiftoolExporter(
-      rolls: rolls,
-      shots: allShots,
-      lenses: lenses,
-    ).toJson();
-
-    final filename = rolls.length == 1
-        ? '${_slug(rolls.first.title ?? rolls.first.id)}.json'
-        : 'rol_export_${DateTime.now().millisecondsSinceEpoch}.json';
-
-    final bytes = Uint8List.fromList(utf8.encode(json));
+    final bytes = Uint8List.fromList(utf8.encode(body));
 
     if (kIsWeb) {
-      final xfile = XFile.fromData(
-        bytes,
-        name: filename,
-        mimeType: 'application/json',
-      );
-      await Share.shareXFiles([xfile], text: 'ROL export');
+      await Share.shareXFiles([
+        XFile.fromData(bytes, name: filename, mimeType: mimeType),
+      ], text: 'ROL export');
       return;
     }
 
@@ -59,15 +59,29 @@ class ExportService {
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(bytes);
     await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'application/json')],
+      [XFile(file.path, mimeType: mimeType)],
       text: 'ROL export',
     );
   }
 
-  String _slug(String s) => s
-      .trim()
-      .replaceAll(RegExp(r'[\\/:*?"<>|\s]+'), '_')
-      .replaceAll(RegExp(r'_+'), '_');
+  Future<_RollBundle> _load(Roll roll) async {
+    final shots = await ref.read(shotRepositoryProvider).getShotsByRollId(roll.id);
+    final lensIds = <String>{
+      if (roll.defaultLensId != null) roll.defaultLensId!,
+      for (final s in shots)
+        if (s.lensId != null) s.lensId!,
+    };
+    final lenses = lensIds.isEmpty
+        ? const <Lens>[]
+        : await ref.read(lensRepositoryProvider).getLenses(lensIds.toList());
+    return _RollBundle(shots: shots, lenses: lenses);
+  }
+}
+
+class _RollBundle {
+  final List<Shot> shots;
+  final List<Lens> lenses;
+  _RollBundle({required this.shots, required this.lenses});
 }
 
 final exportServiceProvider = Provider(ExportService.new);

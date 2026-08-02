@@ -3,103 +3,183 @@ import 'package:record_of_life/domain/models/lens.dart';
 import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 
-// exiftool -json= 명령으로 스캔본에 EXIF 주입할 수 있는 포맷.
-// 각 항목의 SourceFile 값이 실제 스캔 파일명과 매칭되어야 함.
-//
-// 사용 흐름:
-//   1. 이 앱에서 롤 선택 → Export
-//   2. 생성된 .json을 스캔본 폴더에 복사
-//   3. 스캔본 파일을 {safeTitle}_{idx:03d}.* 형식으로 이름 맞추거나
-//      JSON의 SourceFile 필드를 수정
-//   4. `exiftool -json=roll_XXX.json *.jpg` 로 일괄 주입
-class ExiftoolExporter {
-  final List<Roll> rolls;
-  final List<Shot> shots;
-  final List<Lens> lenses;
+// T1 스키마 v1. 데스크탑 companion 앱이 소비하는 롤 단위 export.
+String buildRolJson({
+  required Roll roll,
+  required List<Shot> shots,
+  required List<Lens> lenses,
+  String? artist,
+  DateTime? exportedAt,
+}) {
+  final lensById = {for (final l in lenses) l.id: l};
+  final sorted = [...shots]..sort((a, b) => a.idx.compareTo(b.idx));
 
-  ExiftoolExporter({
-    required this.rolls,
-    required this.shots,
-    required this.lenses,
-  });
+  final usedLensIds = <String>{
+    if (roll.defaultLensId != null) roll.defaultLensId!,
+    for (final s in sorted)
+      if (s.lensId != null) s.lensId!,
+  };
 
-  String toJson() {
-    final entries = <Map<String, Object?>>[];
-    final lensById = {for (final l in lenses) l.id: l};
-    final rollById = {for (final r in rolls) r.id: r};
-
-    for (final shot in shots) {
-      final roll = rollById[shot.rollId];
-      if (roll == null) continue;
-      entries.add(_shotToMap(shot, roll, lensById));
-    }
-
-    return const JsonEncoder.withIndent('  ').convert(entries);
+  final lensList = <Map<String, Object?>>[];
+  for (final id in usedLensIds) {
+    final l = lensById[id];
+    if (l == null) continue;
+    lensList.add({
+      'id': l.id,
+      if (l.brand != null) 'make': l.brand,
+      'model': l.name,
+      if (l.focalLength != null) 'focalLength': l.focalLength,
+    });
   }
 
-  Map<String, Object?> _shotToMap(
-    Shot shot,
-    Roll roll,
-    Map<String, Lens> lensById,
-  ) {
-    final safeTitle = _slug(roll.title ?? roll.id);
-    final lensId = shot.lensId ?? roll.defaultLensId;
-    final lens = lensId == null ? null : lensById[lensId];
-
-    // 상속 우선순위: Shot 값 > 롤의 필름·렌즈 값
-    final iso = shot.iso ?? roll.film?.iso;
-    final focal = shot.focalLength ?? lens?.focalLength;
-    final lensName = lens?.name;
-
-    // exiftool 표준 태그. 미지정 필드는 아예 생략(exiftool이 빈 값으로 덮어쓰지 않도록).
-    final m = <String, Object?>{
-      'SourceFile': '${safeTitle}_${shot.idx.toString().padLeft(3, '0')}.*',
-    };
-    if (shot.date != null) m['DateTimeOriginal'] = _formatExifDate(shot.date!);
-    if (shot.aperture != null) m['FNumber'] = shot.aperture!.value;
-    if (shot.shutterSpeed != null) {
-      m['ExposureTime'] = _exposureTimeString(shot.shutterSpeed!.value);
-    }
-    if (iso != null) m['ISO'] = iso;
-    if (shot.exposureComp != null) {
-      m['ExposureBiasValue'] = shot.exposureComp!.value;
-    }
-    if (focal != null) m['FocalLength'] = focal;
-    if (lensName != null) m['LensModel'] = lensName;
-    if (shot.gpsLat != null) m['GPSLatitude'] = shot.gpsLat;
-    if (shot.gpsLng != null) m['GPSLongitude'] = shot.gpsLng;
-    if (roll.camera != null) {
-      final cam = roll.camera!;
-      m['Make'] = cam.brand;
-      m['Model'] = cam.title;
-    }
-    if (roll.film != null) m['UserComment'] = 'Film: ${roll.film!.name}';
-    if (shot.note != null && shot.note!.isNotEmpty) {
-      m['ImageDescription'] = shot.note;
-    }
-    if (shot.rating != null) m['Rating'] = shot.rating;
-
-    m.removeWhere((_, v) => v == null);
-    return m;
+  final shotMaps = <Map<String, Object?>>[];
+  for (final s in sorted) {
+    shotMaps.add({
+      'idx': s.idx,
+      if (s.aperture != null) 'aperture': s.aperture!.value,
+      if (s.shutterSpeed != null)
+        'shutterSpeed': _shutter(s.shutterSpeed!.value),
+      if (s.iso != null) 'iso': s.iso,
+      if (s.focalLength != null) 'focalLength': s.focalLength,
+      if (s.exposureComp != null) 'exposureComp': s.exposureComp!.value,
+      if (s.lensId != null) 'lensId': s.lensId,
+      if (s.flash != null) 'flash': s.flash,
+      if (s.date != null) 'date': s.date!.toIso8601String(),
+      if (s.rating != null) 'rating': s.rating,
+      if (s.note != null && s.note!.isNotEmpty) 'note': s.note,
+      if (s.gpsLat != null) 'gpsLat': s.gpsLat,
+      if (s.gpsLng != null) 'gpsLng': s.gpsLng,
+    });
   }
 
-  String _formatExifDate(DateTime d) {
-    // exiftool DateTimeOriginal 표준: "YYYY:MM:DD HH:MM:SS"
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${d.year}:${two(d.month)}:${two(d.day)} '
-        '${two(d.hour)}:${two(d.minute)}:${two(d.second)}';
-  }
+  final data = <String, Object?>{
+    'schema': 1,
+    'exportedAt': (exportedAt ?? DateTime.now()).toIso8601String(),
+    if (artist != null && artist.isNotEmpty) 'artist': artist,
+    'roll': {
+      'id': roll.id,
+      if (roll.title != null) 'name': roll.title,
+      if (roll.film != null)
+        'film': {
+          'name': roll.film!.name,
+          if (roll.film!.iso != null) 'iso': roll.film!.iso,
+        },
+      if (roll.camera != null)
+        'camera': {
+          if (roll.camera!.brand != null) 'make': roll.camera!.brand,
+          'model': roll.camera!.title,
+          'title': roll.camera!.title,
+        },
+      if (roll.pushPull != null && roll.pushPull != 0) 'pushPull': roll.pushPull,
+      'lenses': lensList,
+      'shots': shotMaps,
+    },
+  };
 
-  // enum value 는 double. 1/125 같은 값은 "1/125" 문자열로 변환.
-  String _exposureTimeString(double v) {
-    if (v <= 0) return v.toString(); // bulb/auto 특수값
-    if (v >= 1) return v.toString();
-    final inv = (1 / v).round();
-    return '1/$inv';
-  }
-
-  String _slug(String s) => s
-      .trim()
-      .replaceAll(RegExp(r'[\\/:*?"<>|\s]+'), '_')
-      .replaceAll(RegExp(r'_+'), '_');
+  return const JsonEncoder.withIndent('  ').convert(data);
 }
+
+// T9 + T5. 터미널 사용자용 exiftool argfile. 각 shot을 -execute 블록으로 배치.
+// 사용자는 스캔 파일을 frame_NNN.<ext>로 리네임 후 `exiftool -@ this.args` 실행.
+String buildArgfile({
+  required Roll roll,
+  required List<Shot> shots,
+  required List<Lens> lenses,
+  String? artist,
+  String defaultExt = 'jpg',
+}) {
+  final lensById = {for (final l in lenses) l.id: l};
+  final sorted = [...shots]..sort((a, b) => a.idx.compareTo(b.idx));
+  final buf = StringBuffer();
+
+  buf
+    ..writeln('# ROL exiftool argfile')
+    ..writeln('# Roll: ${roll.title ?? roll.id}')
+    ..writeln('# Usage: exiftool -@ this.args -overwrite_original_in_place')
+    ..writeln('# 스캔 파일명 규칙: frame_001.$defaultExt (zero-padded).')
+    ..writeln('#   확장자가 다르면 아래 파일명 라인의 확장자를 바꿔 실행.')
+    ..writeln('# XMP-rol:* 커스텀 태그는 .ExifTool_config 필요.')
+    ..writeln('#   설정 없으면 XMP-rol 줄 삭제 후 실행.')
+    ..writeln('# 스킵/역순/블랭크 프레임 있는 롤은 데스크탑 GUI 사용 권장.')
+    ..writeln();
+
+  for (final s in sorted) {
+    final lensId = s.lensId ?? roll.defaultLensId;
+    final lens = lensId == null ? null : lensById[lensId];
+    final iso = s.iso ?? roll.film?.iso;
+    final focal = s.focalLength ?? lens?.focalLength;
+
+    buf.writeln('# Frame ${s.idx}');
+    if (s.aperture != null) buf.writeln('-FNumber=${s.aperture!.value}');
+    if (s.shutterSpeed != null) {
+      buf.writeln('-ExposureTime=${_shutter(s.shutterSpeed!.value)}');
+    }
+    if (iso != null) buf.writeln('-ISO=$iso');
+    if (focal != null) buf.writeln('-FocalLength=$focal');
+    if (s.exposureComp != null) {
+      buf.writeln('-ExposureBiasValue=${s.exposureComp!.value}');
+    }
+    if (roll.camera != null) {
+      final c = roll.camera!;
+      if (c.brand != null) buf.writeln('-Make=${c.brand}');
+      buf.writeln('-Model=${c.title}');
+    }
+    if (lens != null) {
+      buf.writeln('-LensModel=${lens.name}');
+      buf.writeln('-XMP-aux:Lens=${lens.name}');
+      if (lens.brand != null) buf.writeln('-LensMake=${lens.brand}');
+    }
+    if (roll.film != null) {
+      buf.writeln('-XMP-rol:FilmStock=${roll.film!.name}');
+    }
+    if (roll.pushPull != null && roll.pushPull != 0) {
+      final v = roll.pushPull! > 0 ? '+${roll.pushPull}' : '${roll.pushPull}';
+      buf.writeln('-XMP-rol:PushPull=$v');
+    }
+    if (s.flash != null) buf.writeln('-Flash=${s.flash! ? 1 : 0}');
+    if (artist != null && artist.isNotEmpty) {
+      buf.writeln('-Artist=$artist');
+      buf.writeln('-XMP-dc:Creator=$artist');
+    }
+    if (s.date != null) {
+      final d = _exifDate(s.date!);
+      buf.writeln('-DateTimeOriginal=$d');
+      buf.writeln('-CreateDate=$d');
+      buf.writeln('-ModifyDate=$d');
+    }
+    if (s.rating != null) buf.writeln('-Rating=${s.rating}');
+    if (s.note != null && s.note!.trim().isNotEmpty) {
+      // argfile은 한 줄 = 한 인자. 개행은 공백으로 압축.
+      final note = s.note!.replaceAll(RegExp(r'\r?\n'), ' ').trim();
+      buf.writeln('-ImageDescription=$note');
+      buf.writeln('-XMP-dc:Description=$note');
+    }
+    if (s.gpsLat != null) buf.writeln('-GPSLatitude=${s.gpsLat}');
+    if (s.gpsLng != null) buf.writeln('-GPSLongitude=${s.gpsLng}');
+
+    buf
+      ..writeln('frame_${s.idx.toString().padLeft(3, '0')}.$defaultExt')
+      ..writeln('-execute')
+      ..writeln();
+  }
+
+  return buf.toString();
+}
+
+String _shutter(double v) {
+  if (v <= 0) return v.toString();
+  if (v >= 1) return v.toString();
+  final inv = (1 / v).round();
+  return '1/$inv';
+}
+
+String _exifDate(DateTime d) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${d.year}:${two(d.month)}:${two(d.day)} '
+      '${two(d.hour)}:${two(d.minute)}:${two(d.second)}';
+}
+
+String slugForFilename(String s) => s
+    .trim()
+    .replaceAll(RegExp(r'[\\/:*?"<>|\s]+'), '_')
+    .replaceAll(RegExp(r'_+'), '_');

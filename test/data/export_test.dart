@@ -12,138 +12,147 @@ import 'package:record_of_life/domain/models/roll.dart';
 import 'package:record_of_life/domain/models/shot.dart';
 
 void main() {
-  Map<String, Object?> firstEntry(String json) {
-    final list = jsonDecode(json) as List;
-    return Map<String, Object?>.from(list.first as Map);
-  }
+  group('buildRolJson (T1 schema v1)', () {
+    test('schema=1, roll+shots+artist 왕복', () {
+      final roll = Roll(
+        id: 'r1',
+        title: '가을 산책',
+        camera: Camera(id: 'c1', title: 'FM2', brand: 'Nikon'),
+        film: Film(id: 'f1', name: 'Portra 400', brand: 'Kodak', iso: 400),
+        defaultLensId: 'l1',
+        pushPull: 1,
+      );
+      final lens = Lens(id: 'l1', name: 'Nikkor 50mm', focalLength: 50, brand: 'Nikon');
+      final shots = [
+        Shot(
+          id: 's1',
+          rollId: 'r1',
+          idx: 2,
+          aperture: Aperture.f2_8,
+          shutterSpeed: ShutterSpeed.s1_125,
+          exposureComp: ExposureComp.plus0_7,
+          iso: 800,
+          rating: 4,
+          note: 'overcast',
+          date: DateTime(2026, 8, 2, 14, 30),
+        ),
+        Shot(id: 's2', rollId: 'r1', idx: 1),
+      ];
+      final data = jsonDecode(buildRolJson(
+        roll: roll,
+        shots: shots,
+        lenses: [lens],
+        artist: 'Jane',
+        exportedAt: DateTime.utc(2026, 8, 2, 5, 30),
+      )) as Map<String, Object?>;
 
-  test('SourceFile: {safeTitle}_{idx:03d}.*, 특수문자 slug', () {
-    final roll = Roll(
-      id: 'r1',
-      title: '가을 산책/일본 여행',
-      camera: Camera(id: 'c1', title: 'Nikon FM2', brand: 'Nikon'),
-      film: Film(id: 'f1', name: 'Portra 400', brand: 'Kodak', iso: 400),
-    );
-    final shot = Shot(id: 's1', rollId: 'r1', idx: 5);
-    final json = ExiftoolExporter(rolls: [roll], shots: [shot], lenses: [])
-        .toJson();
-    final entry = firstEntry(json);
-    expect(entry['SourceFile'], '가을_산책_일본_여행_005.*');
+      expect(data['schema'], 1);
+      expect(data['artist'], 'Jane');
+      final r = data['roll'] as Map<String, Object?>;
+      expect(r['name'], '가을 산책');
+      expect(r['pushPull'], 1);
+      expect(((r['film'] as Map)['iso']), 400);
+      expect(((r['camera'] as Map)['make']), 'Nikon');
+      final lenses = r['lenses'] as List;
+      expect(lenses, hasLength(1));
+      expect((lenses.first as Map)['model'], 'Nikkor 50mm');
+      final ss = r['shots'] as List;
+      expect(ss.map((s) => (s as Map)['idx']), [1, 2]); // idx 순 정렬
+      final s1 = ss[1] as Map;
+      expect(s1['aperture'], 2.8);
+      expect(s1['shutterSpeed'], '1/125');
+      expect(s1['iso'], 800);
+      expect(s1['rating'], 4);
+      expect(s1['note'], 'overcast');
+    });
+
+    test('null 필드 생략', () {
+      final roll = Roll(id: 'r1');
+      final shot = Shot(id: 's1', rollId: 'r1', idx: 1);
+      final data = jsonDecode(buildRolJson(
+        roll: roll,
+        shots: [shot],
+        lenses: const [],
+      )) as Map<String, Object?>;
+      final s = (data['roll'] as Map)['shots'] as List;
+      expect((s.first as Map).containsKey('aperture'), false);
+      expect((s.first as Map).containsKey('iso'), false);
+      expect(data.containsKey('artist'), false);
+    });
   });
 
-  test('ExposureTime: 1/125 형태로 변환', () {
-    final roll = Roll(id: 'r1');
-    final shot = Shot(
-      id: 's1',
-      rollId: 'r1',
-      idx: 1,
-      shutterSpeed: ShutterSpeed.s1_125, // 1/125
-    );
-    final entry = firstEntry(
-      ExiftoolExporter(rolls: [roll], shots: [shot], lenses: []).toJson(),
-    );
-    expect(entry['ExposureTime'], '1/125');
+  group('buildArgfile (T9 + T5)', () {
+    test('shot당 -execute 블록 + frame_NNN.<ext>', () {
+      final roll = Roll(
+        id: 'r1',
+        title: 'roll',
+        camera: Camera(id: 'c1', title: 'FM2', brand: 'Nikon'),
+        film: Film(id: 'f1', name: 'Portra 400', iso: 400),
+      );
+      final shots = [
+        Shot(
+          id: 's1',
+          rollId: 'r1',
+          idx: 1,
+          aperture: Aperture.f2_8,
+          shutterSpeed: ShutterSpeed.s1_125,
+        ),
+        Shot(id: 's2', rollId: 'r1', idx: 2, aperture: Aperture.f4_0),
+      ];
+      final out = buildArgfile(
+        roll: roll,
+        shots: shots,
+        lenses: const [],
+        artist: 'Jane',
+      );
+
+      expect(out, contains('-FNumber=2.8'));
+      expect(out, contains('-ExposureTime=1/125'));
+      expect(out, contains('-ISO=400')); // film.iso 상속
+      expect(out, contains('-Make=Nikon'));
+      expect(out, contains('-Model=FM2'));
+      expect(out, contains('-XMP-rol:FilmStock=Portra 400'));
+      expect(out, contains('-Artist=Jane'));
+      expect(out, contains('-XMP-dc:Creator=Jane'));
+      expect(out, contains('frame_001.jpg'));
+      expect(out, contains('frame_002.jpg'));
+      expect('-execute'.allMatches(out).length, 2);
+    });
+
+    test('push/pull, 노트 개행 압축', () {
+      final roll = Roll(id: 'r1', pushPull: -1);
+      final shot = Shot(
+        id: 's1',
+        rollId: 'r1',
+        idx: 1,
+        note: 'line1\nline2',
+        flash: true,
+      );
+      final out = buildArgfile(
+        roll: roll,
+        shots: [shot],
+        lenses: const [],
+      );
+      expect(out, contains('-XMP-rol:PushPull=-1'));
+      expect(out, contains('-Flash=1'));
+      expect(out, contains('-ImageDescription=line1 line2'));
+      expect(out, isNot(contains('line1\nline2')));
+    });
+
+    test('defaultExt 커스터마이즈', () {
+      final roll = Roll(id: 'r1');
+      final shot = Shot(id: 's1', rollId: 'r1', idx: 3);
+      final out = buildArgfile(
+        roll: roll,
+        shots: [shot],
+        lenses: const [],
+        defaultExt: 'tif',
+      );
+      expect(out, contains('frame_003.tif'));
+    });
   });
 
-  test('ExposureTime: 1초 이상은 소수로', () {
-    final roll = Roll(id: 'r1');
-    final shot = Shot(
-      id: 's1',
-      rollId: 'r1',
-      idx: 1,
-      shutterSpeed: ShutterSpeed.s2_0, // 2 seconds
-    );
-    final entry = firstEntry(
-      ExiftoolExporter(rolls: [roll], shots: [shot], lenses: []).toJson(),
-    );
-    expect(entry['ExposureTime'], '2.0');
-  });
-
-  test('ISO 상속: Shot.iso null이면 Film.iso 사용', () {
-    final film = Film(id: 'f1', name: 'HP5', brand: 'Ilford', iso: 400);
-    final roll = Roll(id: 'r1', film: film);
-    final shot = Shot(id: 's1', rollId: 'r1', idx: 1);
-    final entry = firstEntry(
-      ExiftoolExporter(rolls: [roll], shots: [shot], lenses: []).toJson(),
-    );
-    expect(entry['ISO'], 400);
-  });
-
-  test('ISO override: Shot.iso 지정 시 우선 (push/pull)', () {
-    final film = Film(id: 'f1', name: 'Portra', brand: 'Kodak', iso: 400);
-    final roll = Roll(id: 'r1', film: film);
-    final shot = Shot(id: 's1', rollId: 'r1', idx: 1, iso: 800);
-    final entry = firstEntry(
-      ExiftoolExporter(rolls: [roll], shots: [shot], lenses: []).toJson(),
-    );
-    expect(entry['ISO'], 800);
-  });
-
-  test('FocalLength: Shot 없으면 Lens 값 상속, LensModel 세팅', () {
-    final lens =
-        Lens(id: 'l1', name: 'Nikkor 50mm', focalLength: 50, mount: 'F');
-    final roll = Roll(id: 'r1', defaultLensId: 'l1');
-    final shot = Shot(id: 's1', rollId: 'r1', idx: 1);
-    final entry = firstEntry(
-      ExiftoolExporter(rolls: [roll], shots: [shot], lenses: [lens]).toJson(),
-    );
-    expect(entry['FocalLength'], 50);
-    expect(entry['LensModel'], 'Nikkor 50mm');
-  });
-
-  test('null 필드는 JSON에서 생략', () {
-    final roll = Roll(id: 'r1');
-    final shot = Shot(id: 's1', rollId: 'r1', idx: 1);
-    final entry = firstEntry(
-      ExiftoolExporter(rolls: [roll], shots: [shot], lenses: []).toJson(),
-    );
-    expect(entry.containsKey('FNumber'), false);
-    expect(entry.containsKey('ISO'), false);
-    expect(entry.containsKey('LensModel'), false);
-  });
-
-  test('DateTimeOriginal 포맷: YYYY:MM:DD HH:MM:SS', () {
-    final roll = Roll(id: 'r1');
-    final shot = Shot(
-      id: 's1',
-      rollId: 'r1',
-      idx: 1,
-      date: DateTime(2026, 3, 5, 14, 7, 42),
-    );
-    final entry = firstEntry(
-      ExiftoolExporter(rolls: [roll], shots: [shot], lenses: []).toJson(),
-    );
-    expect(entry['DateTimeOriginal'], '2026:03:05 14:07:42');
-  });
-
-  test('Camera Make/Model, Film UserComment 매핑', () {
-    final roll = Roll(
-      id: 'r1',
-      camera: Camera(id: 'c1', title: 'FM2', brand: 'Nikon'),
-      film: Film(id: 'f1', name: 'HP5 Plus', brand: 'Ilford', iso: 400),
-    );
-    final shot = Shot(id: 's1', rollId: 'r1', idx: 1);
-    final entry = firstEntry(
-      ExiftoolExporter(rolls: [roll], shots: [shot], lenses: []).toJson(),
-    );
-    expect(entry['Make'], 'Nikon');
-    expect(entry['Model'], 'FM2');
-    expect(entry['UserComment'], 'Film: HP5 Plus');
-  });
-
-  test('FNumber / ExposureBiasValue 매핑', () {
-    final roll = Roll(id: 'r1');
-    final shot = Shot(
-      id: 's1',
-      rollId: 'r1',
-      idx: 1,
-      aperture: Aperture.f2_8,
-      exposureComp: ExposureComp.plus1_0,
-    );
-    final entry = firstEntry(
-      ExiftoolExporter(rolls: [roll], shots: [shot], lenses: []).toJson(),
-    );
-    expect(entry['FNumber'], 2.8);
-    expect(entry['ExposureBiasValue'], 1.0);
+  test('slugForFilename: 특수문자 압축', () {
+    expect(slugForFilename('가을 산책/일본 여행'), '가을_산책_일본_여행');
   });
 }
