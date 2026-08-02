@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'exiftool.dart';
 import 'rol_json.dart';
+import 'sample.dart';
 
 void main() {
   runApp(const RolDesktopApp());
@@ -176,6 +177,18 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  // UI 프리뷰용. 실제 스캔 파일은 없으므로 Image.file은 broken_image로 폴백.
+  void _loadSample() {
+    setState(() {
+      _rol = sampleExport();
+      _rolPath = 'sample.rol.json';
+      _scanDir = Directory('(sample)');
+      _scanFiles = sampleScanFiles();
+      _error = null;
+      _rebuildRows();
+    });
+  }
+
   void _reset() {
     setState(() {
       _rol = null;
@@ -231,6 +244,7 @@ class _MainPageState extends State<MainPage> {
                 error: _error,
                 onOpenRol: _openRolFile,
                 onOpenDir: _openScanDir,
+                onLoadSample: _loadSample,
               ),
       ),
     );
@@ -282,6 +296,7 @@ class _EmptyState extends StatelessWidget {
   final String? error;
   final VoidCallback onOpenRol;
   final VoidCallback onOpenDir;
+  final VoidCallback onLoadSample;
 
   const _EmptyState({
     required this.rol,
@@ -290,6 +305,7 @@ class _EmptyState extends StatelessWidget {
     required this.error,
     required this.onOpenRol,
     required this.onOpenDir,
+    required this.onLoadSample,
   });
 
   @override
@@ -344,6 +360,12 @@ class _EmptyState extends StatelessWidget {
                   label: const Text('스캔 폴더 열기'),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: onLoadSample,
+              icon: const Icon(Icons.auto_awesome, size: 16),
+              label: const Text('샘플 데이터로 UI 미리보기'),
             ),
             if (error != null) ...[
               const SizedBox(height: 24),
