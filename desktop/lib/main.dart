@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import 'exiftool.dart';
+import 'prototype_matching_ux.dart';
 import 'rol_json.dart';
 import 'sample.dart';
 
@@ -59,6 +60,15 @@ class _MainPageState extends State<MainPage> {
   // 리스트 길이 = 행 개수. 두 리스트는 항상 같은 길이.
   List<int?> _leftIdx = [];
   List<int?> _rightIdx = [];
+
+  // PROTOTYPE: 오토매치 + 예외 조정 3안. throwaway.
+  MatchVariant _variant = MatchVariant.a;
+  MatchState _match = const MatchState({}, 0, 0);
+
+  void _rebuildMatch() {
+    _match = MatchState.autoMatch(
+        _rol?.roll.shots.length ?? 0, _scanFiles.length);
+  }
 
   void _rebuildRows() {
     final shots = _rol?.roll.shots.length ?? 0;
@@ -162,6 +172,7 @@ class _MainPageState extends State<MainPage> {
       _scanFiles = files;
       _error = null;
       _rebuildRows();
+      _rebuildMatch();
     });
   }
 
@@ -186,6 +197,7 @@ class _MainPageState extends State<MainPage> {
       _scanFiles = sampleScanFiles();
       _error = null;
       _rebuildRows();
+      _rebuildMatch();
     });
   }
 
@@ -214,38 +226,40 @@ class _MainPageState extends State<MainPage> {
             ),
         ],
       ),
-      body: DropTarget(
-        onDragDone: _onDrop,
-        child: loaded
-            ? _LoadedState(
-                rol: _rol!,
-                scanDir: _scanDir!,
-                scanFiles: _scanFiles,
-                leftIdx: _leftIdx,
-                rightIdx: _rightIdx,
-                status: _status,
-                expanded: _expanded,
-                keepBackup: _keepBackup,
-                running: _running,
-                exiftoolOk: _exiftoolOk,
-                onReloadRol: _openRolFile,
-                onReloadDir: _openScanDir,
-                onApply: _apply,
-                onToggleExpanded: _toggleExpanded,
-                onKeepBackupChanged: (v) => setState(() => _keepBackup = v),
-                onShiftRight: _shiftRight,
-                onReverseRight: _reverseRight,
-                onInsertGap: _insertGap,
-              )
-            : _EmptyState(
-                rol: _rol,
-                rolPath: _rolPath,
-                scanDir: _scanDir,
-                error: _error,
-                onOpenRol: _openRolFile,
-                onOpenDir: _openScanDir,
-                onLoadSample: _loadSample,
-              ),
+      body: Stack(
+        children: [
+          DropTarget(
+            onDragDone: _onDrop,
+            child: loaded
+                ? _PrototypeLoaded(
+                    rol: _rol!,
+                    scanDir: _scanDir!,
+                    scanFiles: _scanFiles,
+                    match: _match,
+                    variant: _variant,
+                    keepBackup: _keepBackup,
+                    exiftoolOk: _exiftoolOk,
+                    onReloadRol: _openRolFile,
+                    onReloadDir: _openScanDir,
+                    onKeepBackupChanged: (v) =>
+                        setState(() => _keepBackup = v),
+                  )
+                : _EmptyState(
+                    rol: _rol,
+                    rolPath: _rolPath,
+                    scanDir: _scanDir,
+                    error: _error,
+                    onOpenRol: _openRolFile,
+                    onOpenDir: _openScanDir,
+                    onLoadSample: _loadSample,
+                  ),
+          ),
+          if (loaded)
+            MatchPrototypeSwitcher(
+              current: _variant,
+              onChange: (v) => setState(() => _variant = v),
+            ),
+        ],
       ),
     );
   }
@@ -380,6 +394,139 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+// PROTOTYPE 로드 상태: 메타 + 배너 + variant body + Apply. throwaway.
+class _PrototypeLoaded extends StatefulWidget {
+  final RolExport rol;
+  final Directory scanDir;
+  final List<File> scanFiles;
+  final MatchState match;
+  final MatchVariant variant;
+  final bool keepBackup;
+  final bool? exiftoolOk;
+  final VoidCallback onReloadRol;
+  final VoidCallback onReloadDir;
+  final ValueChanged<bool> onKeepBackupChanged;
+
+  const _PrototypeLoaded({
+    required this.rol,
+    required this.scanDir,
+    required this.scanFiles,
+    required this.match,
+    required this.variant,
+    required this.keepBackup,
+    required this.exiftoolOk,
+    required this.onReloadRol,
+    required this.onReloadDir,
+    required this.onKeepBackupChanged,
+  });
+
+  @override
+  State<_PrototypeLoaded> createState() => _PrototypeLoadedState();
+}
+
+class _PrototypeLoadedState extends State<_PrototypeLoaded> {
+  @override
+  Widget build(BuildContext context) {
+    final ctx = MatchingContext(rol: widget.rol, scanFiles: widget.scanFiles);
+    return Column(
+      children: [
+        // Meta bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.rol.roll.summaryLine,
+                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(widget.scanDir.path,
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: '.rol.json 재로드',
+                icon: const Icon(Icons.description_outlined),
+                onPressed: widget.onReloadRol,
+              ),
+              IconButton(
+                tooltip: '스캔 폴더 재로드',
+                icon: const Icon(Icons.folder_open),
+                onPressed: widget.onReloadDir,
+              ),
+            ],
+          ),
+        ),
+        if (widget.exiftoolOk == false)
+          Container(
+            width: double.infinity,
+            color: Theme.of(context).colorScheme.errorContainer,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'exiftool 이 PATH에 없음. 설치 후 앱을 재실행하세요.',
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onErrorContainer),
+            ),
+          ),
+        const Divider(height: 1),
+        Expanded(child: _variantBody(ctx)),
+        const Divider(height: 1),
+        _bottomBar(),
+        const SizedBox(height: 60), // 스위처 pill 자리
+      ],
+    );
+  }
+
+  Widget _variantBody(MatchingContext ctx) {
+    switch (widget.variant) {
+      case MatchVariant.a:
+        return VariantA(ctx: ctx, initial: widget.match);
+      case MatchVariant.b:
+        return VariantB(ctx: ctx, initial: widget.match);
+      case MatchVariant.c:
+        return VariantC(ctx: ctx, initial: widget.match);
+    }
+  }
+
+  Widget _bottomBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Row(children: [
+            Switch(
+                value: widget.keepBackup,
+                onChanged: widget.onKeepBackupChanged),
+            const SizedBox(width: 4),
+            const Text('백업 유지'),
+          ]),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              '${widget.match.matchedCount} / ${widget.match.shotCount} shot · ${widget.scanFiles.length} file',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text(
+                        'PROTOTYPE: Apply는 승자 결정 후 real code에서.')),
+              );
+            },
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('Apply EXIF'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ignore: unused_element
 class _LoadedState extends StatelessWidget {
   final RolExport rol;
   final Directory scanDir;
