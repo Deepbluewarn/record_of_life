@@ -77,7 +77,7 @@ class _CaptureModePageState extends ConsumerState<CaptureModePage> {
     );
 
     await ref.read(shotProvider(currentRoll.id).notifier).addShot(shot);
-    ref.read(newShotFormProvider(null).notifier).reset();
+    ref.read(newShotFormProvider(null).notifier).resetForNextShot();
     HapticFeedback.mediumImpact();
     if (mounted) Navigator.pop(context);
   }

@@ -53,7 +53,7 @@ class FilmStrip extends StatelessWidget {
                         padding: EdgeInsets.only(right: i == n - 1 ? 0 : gap),
                         child: _Frame(
                           index: i + 1,
-                          hasShot: shots.any((s) => s.idx == i + 1),
+                          shot: shots.where((s) => s.idx == i + 1).firstOrNull,
                           width: frameW,
                           height: frameH,
                         ),
@@ -114,33 +114,128 @@ class _SprocketBand extends StatelessWidget {
 
 class _Frame extends StatelessWidget {
   final int index;
-  final bool hasShot;
+  final Shot? shot;
   final double width;
   final double height;
   const _Frame({
     required this.index,
-    required this.hasShot,
+    required this.shot,
     required this.width,
     required this.height,
   });
 
   @override
   Widget build(BuildContext context) {
+    final s = shot;
+    if (s == null) {
+      return SizedBox(
+        width: width,
+        height: height,
+        child: Container(
+          color: _frameEmpty,
+          alignment: Alignment.center,
+          child: Text(
+            '$index',
+            style: const TextStyle(
+              color: _emptyInk,
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+            ),
+          ),
+        ),
+      );
+    }
+    // 데이터 프레임: 필름 edge printing 스타일. 사진 자리에 촬영 값이 인쇄됨.
+    final ap = s.aperture;
+    final ss = s.shutterSpeed;
+    final rating = s.rating ?? 0;
     return SizedBox(
       width: width,
       height: height,
       child: Container(
-        color: hasShot ? _frameDark : _frameEmpty,
-        alignment: Alignment.center,
-        child: Text(
-          '$index',
-          style: TextStyle(
-            color: hasShot ? _hole : _emptyInk,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-          ),
+        color: _frameDark,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text('$index', style: _edge),
+                const Spacer(),
+                if (rating > 0) _RatingDots(rating: rating),
+              ],
+            ),
+            const Spacer(),
+            if (ap != null)
+              Center(
+                child: Text('f/${ap.value}',
+                    style: _big, maxLines: 1, overflow: TextOverflow.visible),
+              ),
+            if (ss != null)
+              Center(
+                child: Text(ss.label,
+                    style: _medium, maxLines: 1, overflow: TextOverflow.visible),
+              ),
+            if (ap == null && ss == null)
+              const Center(child: Text('—', style: _medium)),
+            const Spacer(),
+            Row(
+              children: [
+                Text(
+                  s.focalLength != null ? '${s.focalLength}mm' : '',
+                  style: _edge,
+                ),
+                const Spacer(),
+                Text(s.iso != null ? 'ISO ${s.iso}' : '', style: _edge),
+              ],
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  static const _big = TextStyle(
+    color: _hole,
+    fontSize: 15,
+    fontWeight: FontWeight.w800,
+    height: 1.0,
+  );
+  static const _medium = TextStyle(
+    color: _hole,
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    height: 1.1,
+  );
+  static const _edge = TextStyle(
+    color: Color(0xB3FAF6EE), // _hole 70%
+    fontSize: 8,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.5,
+  );
+}
+
+// 별 대신 점 (프레임 상단 인쇄 스타일). 최대 5개.
+class _RatingDots extends StatelessWidget {
+  final int rating;
+  const _RatingDots({required this.rating});
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(rating.clamp(0, 5), (_) => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 1),
+        child: SizedBox(
+          width: 3,
+          height: 3,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: _hole,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      )),
     );
   }
 }

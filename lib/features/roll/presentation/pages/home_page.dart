@@ -136,7 +136,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         notifier.setLensId(roll.defaultLensId);
       }
       if (!context.mounted) return;
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => CaptureModePage(roll: roll)),
       );

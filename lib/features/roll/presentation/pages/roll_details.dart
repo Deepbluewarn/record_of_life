@@ -132,7 +132,7 @@ class _RollDetailsPageState extends ConsumerState<RollDetailsPage> {
         formNotifier.setLensId(current.defaultLensId);
       }
       if (!mounted) return;
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => CaptureModePage(roll: current)),
       );
